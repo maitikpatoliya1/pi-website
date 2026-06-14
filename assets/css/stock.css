@@ -1329,3 +1329,16 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
 @media (max-width: 760px) {
   .dash-cols { grid-template-columns: 1fr; }
 }
+
+/* ---------------- user management: search toolbar ---------------- */
+.um-toolbar { display: flex; align-items: center; gap: 14px 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.um-toolbar .um-pills { margin-bottom: 0; }
+.um-search {
+  display: flex; align-items: center; gap: 9px; flex: 1 1 280px; max-width: 400px;
+  padding: 0 14px; border: 1px solid var(--line); border-radius: 11px; background: var(--card);
+  transition: border-color 0.2s;
+}
+.um-search:focus-within { border-color: var(--champagne); }
+.um-search .ic { width: 18px; height: 18px; color: var(--ink-faint); }
+.um-search input { flex: 1; border: 0; outline: none; background: none; padding: 11px 0; font-size: 13.5px; color: var(--ink); font-family: inherit; }
+.um-search input::placeholder { color: var(--ink-faint); }

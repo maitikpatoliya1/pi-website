@@ -2,7 +2,7 @@
    Pansuriya Impex — User Management (in-page, admin only)
    ------------------------------------------------------------
    Rendered into #umRoot inside stock.html. Two sub-tabs:
-     • Applications — approve/reject KYC + assign roles
+     • Applications — search + approve/reject KYC + assign roles
      • Role Permissions — choose which pages each role can open
    Exposes window.PIUserMgmt.render(). Backed by PIAuth + PIPerms.
    ============================================================ */
@@ -17,7 +17,9 @@
 
   var activeSub = "applications";
   var activeFilter = "pending";
+  var searchQuery = "";
 
+  /* ---------- card helpers ---------- */
   function roleOptions(cur) {
     return PIAuth.ROLES.map(function (r) {
       return '<option value="' + r + '"' + (r === cur ? " selected" : "") + ">" + esc(PIAuth.roleLabel(r)) + "</option>";
@@ -61,21 +63,74 @@
         '<select data-role-for="' + esc(a.username) + '">' + roleOptions(a.role) + "</select></label>" + actions + "</div></article>";
   }
 
-  function applicationsHTML() {
-    var all = PIAuth.listAccounts();
-    var counts = { pending: 0, approved: 0, rejected: 0, all: all.length };
-    all.forEach(function (a) { counts[a.status] = (counts[a.status] || 0) + 1; });
-    var list = activeFilter === "all" ? all : all.filter(function (a) { return a.status === activeFilter; });
-    var pills = [["pending", "Pending"], ["approved", "Approved"], ["rejected", "Rejected"], ["all", "All"]].map(function (p) {
+  /* ---------- applications: search + status pills + list ---------- */
+  function matchesSearch(a) {
+    var q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
+    var hay = [a.company, a.username, a.email, fullName(a), a.phone, a.countryCode,
+      a.taxId1, a.taxId2, a.city, a.state, a.country, a.location, PIAuth.roleLabel(a.role)]
+      .filter(Boolean).join(" ").toLowerCase();
+    return hay.indexOf(q) > -1;
+  }
+  function pillsHTML(counts) {
+    return [["pending", "Pending"], ["approved", "Approved"], ["rejected", "Rejected"], ["all", "All"]].map(function (p) {
       return '<button class="um-pill' + (activeFilter === p[0] ? " active" : "") + '" data-filter="' + p[0] + '">' + p[1] +
         ' <span class="um-cnt">' + counts[p[0]] + "</span></button>";
     }).join("");
-    var body = list.length ? list.map(cardHTML).join("") :
-      '<div class="um-empty"><svg class="ic"><use href="#ic-inbox"/></svg><p>No ' + (activeFilter === "all" ? "" : activeFilter + " ") + "applications.</p></div>";
-    return '<div class="um-pills">' + pills + '</div><div class="um-list">' + body + "</div>";
   }
 
-  function permsHTML() {
+  // Re-renders only the pills + list (NOT the search input), so typing
+  // in the search box keeps focus and caret position.
+  function updateApplications() {
+    var all = PIAuth.listAccounts();
+    var counts = { pending: 0, approved: 0, rejected: 0, all: all.length };
+    all.forEach(function (a) { counts[a.status] = (counts[a.status] || 0) + 1; });
+
+    var pillsEl = $("umPills");
+    if (pillsEl) {
+      pillsEl.innerHTML = pillsHTML(counts);
+      Array.prototype.forEach.call(pillsEl.querySelectorAll(".um-pill"), function (b) {
+        b.addEventListener("click", function () { activeFilter = b.getAttribute("data-filter"); updateApplications(); });
+      });
+    }
+
+    var base = activeFilter === "all" ? all : all.filter(function (a) { return a.status === activeFilter; });
+    var list = base.filter(matchesSearch);
+    var listEl = $("umList");
+    if (!listEl) return;
+
+    if (!list.length) {
+      var msg = searchQuery.trim()
+        ? 'No results for &ldquo;' + esc(searchQuery.trim()) + '&rdquo;.'
+        : "No " + (activeFilter === "all" ? "" : activeFilter + " ") + "applications.";
+      listEl.innerHTML = '<div class="um-empty"><svg class="ic"><use href="#ic-inbox"/></svg><p>' + msg + "</p></div>";
+    } else {
+      listEl.innerHTML = list.map(cardHTML).join("");
+    }
+    // wire card actions
+    Array.prototype.forEach.call(listEl.querySelectorAll("[data-act]"), function (b) {
+      b.addEventListener("click", function () { PIAuth.setStatus(b.getAttribute("data-u"), b.getAttribute("data-act")); updateApplications(); });
+    });
+    Array.prototype.forEach.call(listEl.querySelectorAll("[data-role-for]"), function (sel) {
+      sel.addEventListener("change", function () { PIAuth.setRole(sel.getAttribute("data-role-for"), sel.value); updateApplications(); });
+    });
+  }
+
+  function renderApplications() {
+    $("umBody").innerHTML =
+      '<div class="um-toolbar">' +
+        '<div class="um-search"><svg class="ic"><use href="#ic-search"/></svg>' +
+          '<input id="umSearch" type="search" autocomplete="off" placeholder="Search company, name, email, username…" value="' + esc(searchQuery) + '"></div>' +
+        '<div class="um-pills" id="umPills"></div>' +
+      "</div>" +
+      '<div class="um-list" id="umList"></div>';
+    var s = $("umSearch");
+    s.addEventListener("input", function () { searchQuery = s.value; updateApplications(); });
+    updateApplications();
+  }
+
+  /* ---------- role permissions ---------- */
+  function renderPermissions() {
     var PAGES = PIPerms.PAGES, m = PIPerms.matrix();
     var head = "<th>Role</th>" + PAGES.map(function (p) { return "<th>" + esc(p.label) + "</th>"; }).join("");
     var rows = PIAuth.ROLES.map(function (rl) {
@@ -87,11 +142,24 @@
       }).join("");
       return '<tr><th class="perm-role">' + esc(PIAuth.roleLabel(rl)) + "</th>" + cells + "</tr>";
     }).join("");
-    return '<p class="um-hint">Tick which pages each role can open from the menu. The Admin row is locked to full access so no one gets locked out.</p>' +
+
+    $("umBody").innerHTML =
+      '<p class="um-hint">Tick which pages each role can open from the menu. The Admin row is locked to full access so no one gets locked out.</p>' +
       '<div class="perm-wrap"><table class="perm-table"><thead><tr>' + head + "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
       '<p class="dash-note">Changes save instantly and apply to that role the next time they open the menu.</p>';
+
+    Array.prototype.forEach.call($("umBody").querySelectorAll(".perm-box input"), function (cb) {
+      cb.addEventListener("change", function () {
+        var rl = cb.getAttribute("data-role"), picked = [];
+        Array.prototype.forEach.call($("umBody").querySelectorAll('.perm-box input[data-role="' + rl + '"]'), function (x) {
+          if (x.checked) picked.push(x.getAttribute("data-page"));
+        });
+        PIPerms.setRolePages(rl, picked);
+      });
+    });
   }
 
+  /* ---------- root ---------- */
   function renderRoot() {
     var root = $("umRoot");
     if (!root) return;
@@ -102,32 +170,17 @@
         '<button class="um-subtab' + (activeSub === "applications" ? " active" : "") + '" data-sub="applications"><svg class="ic"><use href="#ic-users"/></svg> Applications</button>' +
         '<button class="um-subtab' + (activeSub === "permissions" ? " active" : "") + '" data-sub="permissions"><svg class="ic"><use href="#ic-shield"/></svg> Role Permissions</button>' +
       "</div>" +
-      '<div class="um-body">' + (activeSub === "applications" ? applicationsHTML() : permsHTML()) + "</div>";
-    wire(root);
-  }
+      '<div class="um-body" id="umBody"></div>';
 
-  function wire(root) {
     Array.prototype.forEach.call(root.querySelectorAll(".um-subtab"), function (b) {
-      b.addEventListener("click", function () { activeSub = b.getAttribute("data-sub"); renderRoot(); });
-    });
-    Array.prototype.forEach.call(root.querySelectorAll(".um-pill"), function (b) {
-      b.addEventListener("click", function () { activeFilter = b.getAttribute("data-filter"); renderRoot(); });
-    });
-    Array.prototype.forEach.call(root.querySelectorAll("[data-act]"), function (b) {
-      b.addEventListener("click", function () { PIAuth.setStatus(b.getAttribute("data-u"), b.getAttribute("data-act")); renderRoot(); });
-    });
-    Array.prototype.forEach.call(root.querySelectorAll("[data-role-for]"), function (sel) {
-      sel.addEventListener("change", function () { PIAuth.setRole(sel.getAttribute("data-role-for"), sel.value); renderRoot(); });
-    });
-    Array.prototype.forEach.call(root.querySelectorAll(".perm-box input"), function (cb) {
-      cb.addEventListener("change", function () {
-        var rl = cb.getAttribute("data-role"), picked = [];
-        Array.prototype.forEach.call(root.querySelectorAll('.perm-box input[data-role="' + rl + '"]'), function (x) {
-          if (x.checked) picked.push(x.getAttribute("data-page"));
-        });
-        PIPerms.setRolePages(rl, picked);
+      b.addEventListener("click", function () {
+        activeSub = b.getAttribute("data-sub");
+        Array.prototype.forEach.call(root.querySelectorAll(".um-subtab"), function (x) { x.classList.toggle("active", x === b); });
+        if (activeSub === "applications") renderApplications(); else renderPermissions();
       });
     });
+
+    if (activeSub === "applications") renderApplications(); else renderPermissions();
   }
 
   global.PIUserMgmt = { render: renderRoot };
