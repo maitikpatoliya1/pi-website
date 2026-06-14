@@ -3,14 +3,17 @@
 <head>
   <meta charset="utf-8" />
 
-  <!-- Auth guard: bounce unauthenticated visitors to the login page
-       before any inventory renders. Reads the session directly so it
-       does not depend on any external script loading first. -->
+  <!-- Auth guard: only signed-in AND admin-approved accounts may see
+       the inventory. Runs before anything renders; reads storage
+       directly so it does not depend on any external script. -->
   <script>
     (function () {
       try {
         var s = JSON.parse(localStorage.getItem("pi_session") || "null");
-        if (!s || !s.user) location.replace("login.html");
+        if (!s || !s.user) { location.replace("login.html"); return; }
+        var accts = JSON.parse(localStorage.getItem("pi_accounts") || "{}");
+        var a = accts[String(s.user).toLowerCase()];
+        if (!a || (a.status || "pending") !== "approved") { location.replace("login.html"); return; }
       } catch (e) {
         location.replace("login.html");
       }
@@ -248,17 +251,26 @@
   <script src="assets/js/fancy-data.js?v=20260613"></script>
   <script src="assets/js/stock.js?v=20260614q"></script>
 
-  <!-- show signed-in user + wire the sign-out button -->
+  <!-- show signed-in user + role, role-specific links, sign-out -->
   <script>
     (function () {
       if (!window.PIAuth) return;
       var user = PIAuth.currentUser();
+      var role = PIAuth.currentRole();
       var label = document.getElementById("helpUser");
       if (user && label) {
-        label.textContent = "Signed in as " + user;
+        label.textContent = "Signed in as " + user + " · " + PIAuth.roleLabel(role);
         label.hidden = false;
       }
+      var menu = document.getElementById("helpMenu");
       var btn = document.getElementById("signOutBtn");
+      // admins get a quick link to the approvals / user-management console
+      if (role === "admin" && menu && btn) {
+        var a = document.createElement("a");
+        a.href = "admin.html";
+        a.innerHTML = '<svg class="ic"><use href="#ic-cert"/></svg> Admin console';
+        menu.insertBefore(a, btn);
+      }
       if (btn) {
         btn.addEventListener("click", function () {
           PIAuth.logout();

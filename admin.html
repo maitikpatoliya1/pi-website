@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0d0d10" />
+  <title>Admin — Account Approvals — Pansuriya Impex</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/register.css?v=1" />
+  <link rel="icon" type="image/png" href="assets/img/logo.png" />
+</head>
+<body>
+
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="i-arrow-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4M10 6l-6 6 6 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5 11-11"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 13l3-8h12l3 8v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6z"/><path d="M3 13h5l1 3h6l1-3h5"/></symbol>
+  </svg>
+
+  <!-- ===== passcode gate ===== -->
+  <main class="admin-gate" id="gateView">
+    <div class="reg-top" style="justify-content:center;margin-bottom:18px">
+      <img class="brand-logo" src="assets/img/logo.png" alt="Pansuriya Impex" />
+    </div>
+    <div class="reg-card">
+      <div class="reg-head" style="margin-bottom:22px">
+        <h1 class="reg-title" style="font-size:34px">Admin Access</h1>
+        <p class="reg-sub">Enter the admin passcode to review applications.</p>
+      </div>
+      <div class="field">
+        <label class="field-label" for="gateCode">Passcode</label>
+        <input class="control" type="password" id="gateCode" placeholder="Enter passcode" />
+      </div>
+      <div class="reg-actions" style="margin-top:20px">
+        <button class="btn-primary" id="gateBtn">Enter</button>
+        <p class="form-msg" id="gateMsg" role="status" aria-live="polite"></p>
+      </div>
+      <p class="reg-foot" style="margin-top:18px"><a href="index.html">← Back to site</a></p>
+    </div>
+  </main>
+
+  <!-- ===== dashboard ===== -->
+  <main class="admin-shell" id="dashView" hidden>
+    <div class="reg-top">
+      <a class="reg-back" href="index.html"><svg><use href="#i-arrow-l"/></svg> Back to site</a>
+      <img class="brand-logo" src="assets/img/logo.png" alt="Pansuriya Impex" />
+    </div>
+
+    <div class="admin-head">
+      <div>
+        <h1 class="admin-title">User Management</h1>
+        <p class="admin-sub">Approve applications, assign roles (admin · stock manager · salesperson · customer), and grant or revoke access.</p>
+        <span class="admin-demo-tag">Demo · data stored in this browser only</span>
+      </div>
+    </div>
+
+    <div class="admin-tabs" id="adminTabs">
+      <button class="admin-tab active" data-tab="pending">Pending <span class="cnt" id="cntPending">0</span></button>
+      <button class="admin-tab" data-tab="approved">Approved <span class="cnt" id="cntApproved">0</span></button>
+      <button class="admin-tab" data-tab="rejected">Rejected <span class="cnt" id="cntRejected">0</span></button>
+      <button class="admin-tab" data-tab="all">All <span class="cnt" id="cntAll">0</span></button>
+    </div>
+
+    <div class="app-list" id="appList"></div>
+  </main>
+
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/admin.js?v=1"></script>
+</body>
+</html>

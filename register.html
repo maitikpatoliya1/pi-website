@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0d0d10" />
+  <title>Create Account — Pansuriya Impex</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/register.css?v=1" />
+  <link rel="icon" type="image/png" href="assets/img/logo.png" />
+</head>
+<body>
+
+  <!-- icon sprite -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="i-arrow-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4M10 6l-6 6 6 6"/></symbol>
+    <symbol id="i-arrow-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M14 6l6 6-6 6"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 6.2A9.7 9.7 0 0 1 12 5.5c6.4 0 10 6.5 10 6.5a17 17 0 0 1-3.3 4M6.4 8A17 17 0 0 0 2 12s3.6 6.5 10 6.5a9.4 9.4 0 0 0 3.6-.7"/><path d="M9.5 9.7a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9.5 16.5H2.5L12 3z"/><path d="M12 10v4M12 17.5h.01"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.6-3.2 7.8-8 9-4.8-1.2-8-4.4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5 11-11"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5"/></symbol>
+  </svg>
+
+  <main class="reg-shell" id="formView">
+    <div class="reg-top">
+      <a class="reg-back" href="login.html"><svg><use href="#i-arrow-l"/></svg> Back to sign in</a>
+      <img class="brand-logo" src="assets/img/logo.png" alt="Pansuriya Impex" />
+    </div>
+
+    <div class="reg-card">
+      <div class="reg-notice">
+        <svg><use href="#i-alert"/></svg>
+        Please fill the form completely — missing information may delay your account approval.
+      </div>
+
+      <div class="reg-head">
+        <h1 class="reg-title">Registration</h1>
+        <p class="reg-sub">Create your trade account. Our team reviews every application before access is granted.</p>
+      </div>
+
+      <!-- jurisdiction: drives which tax fields + documents are requested -->
+      <div class="jur-wrap">
+        <span class="jur-title">Where are you registering from?</span>
+        <div class="jur-toggle" id="jurToggle" role="tablist" aria-label="Registration country">
+          <button type="button" class="jur-btn active" data-jur="India" role="tab">🇮🇳 India</button>
+          <button type="button" class="jur-btn" data-jur="Hong Kong" role="tab">🇭🇰 Hong Kong</button>
+          <button type="button" class="jur-btn" data-jur="USA" role="tab">🇺🇸 USA</button>
+        </div>
+        <span class="jur-hint" id="jurHint">Submit your India business documents (GST, PAN, etc.).</span>
+      </div>
+
+      <form class="reg-grid" id="regForm" novalidate>
+        <!-- company -->
+        <div class="field col-2">
+          <label class="field-label" for="company">Company Name <span class="req">*</span></label>
+          <input type="text" id="company" placeholder="Enter Company Name" autocomplete="organization" />
+          <span class="field-hint">Please fill the legal name as per business registration.</span>
+        </div>
+
+        <!-- credentials -->
+        <div class="field col-half">
+          <label class="field-label" for="username">Username <span class="req">*</span></label>
+          <input type="text" id="username" placeholder="Enter Username" autocomplete="username" />
+        </div>
+        <div class="field col-half">
+          <label class="field-label" for="email">Email Id <span class="req">*</span></label>
+          <input type="email" id="email" placeholder="Enter Email Id" autocomplete="email" />
+        </div>
+
+        <div class="field col-half">
+          <label class="field-label" for="password">Password <span class="req">*</span></label>
+          <div style="position:relative">
+            <input type="password" id="password" placeholder="Enter Password" autocomplete="new-password" />
+            <button type="button" class="pw-eye" data-eye="password" aria-label="Show password"
+              style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:grid;place-items:center;background:none;border:0;color:#8a8b94">
+              <svg class="on" style="width:18px;height:18px"><use href="#i-eye"/></svg>
+              <svg class="off" style="width:18px;height:18px;display:none"><use href="#i-eye-off"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field col-half">
+          <label class="field-label" for="confirm">Confirm Password <span class="req">*</span></label>
+          <div style="position:relative">
+            <input type="password" id="confirm" placeholder="Re-Enter Password" autocomplete="new-password" />
+            <button type="button" class="pw-eye" data-eye="confirm" aria-label="Show password"
+              style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;display:grid;place-items:center;background:none;border:0;color:#8a8b94">
+              <svg class="on" style="width:18px;height:18px"><use href="#i-eye"/></svg>
+              <svg class="off" style="width:18px;height:18px;display:none"><use href="#i-eye-off"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- name -->
+        <div class="field col-half">
+          <label class="field-label" for="firstName">First Name <span class="req">*</span></label>
+          <input type="text" id="firstName" placeholder="Enter First Name" autocomplete="given-name" />
+        </div>
+        <div class="field col-half">
+          <label class="field-label" for="lastName">Last Name <span class="req">*</span></label>
+          <input type="text" id="lastName" placeholder="Enter Last Name" autocomplete="family-name" />
+        </div>
+
+        <div class="field col-half">
+          <label class="field-label" for="middleName">Middle Name</label>
+          <input type="text" id="middleName" placeholder="Enter Middle Name" autocomplete="additional-name" />
+        </div>
+        <div class="field col-half">
+          <label class="field-label" for="phone">Country Code &amp; Phone No <span class="req">*</span></label>
+          <div class="phone-grp">
+            <select id="countryCode" aria-label="Country code">
+              <option value="+91">🇮🇳 +91</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+852">🇭🇰 +852</option>
+              <option value="+971">🇦🇪 +971</option>
+              <option value="+32">🇧🇪 +32</option>
+              <option value="+972">🇮🇱 +972</option>
+              <option value="+65">🇸🇬 +65</option>
+              <option value="+66">🇹🇭 +66</option>
+              <option value="+86">🇨🇳 +86</option>
+              <option value="+61">🇦🇺 +61</option>
+              <option value="+49">🇩🇪 +49</option>
+              <option value="+33">🇫🇷 +33</option>
+              <option value="+81">🇯🇵 +81</option>
+            </select>
+            <input type="tel" id="phone" placeholder="Enter Phone No" autocomplete="tel-national" />
+          </div>
+        </div>
+
+        <!-- address -->
+        <div class="field col-2">
+          <label class="field-label" for="address">Address</label>
+          <textarea id="address" placeholder="Enter Address" autocomplete="street-address"></textarea>
+        </div>
+
+        <!-- country / state / city -->
+        <div class="field col-2 triple-row">
+          <div class="sub-field">
+            <label class="field-label" for="country">Country <span class="req">*</span></label>
+            <select id="country">
+              <option value="" selected disabled>Select a country…</option>
+            </select>
+          </div>
+          <div class="sub-field">
+            <label class="field-label" for="state">State</label>
+            <select id="state"><option value="" selected disabled>Select a state…</option></select>
+            <input type="text" id="stateText" placeholder="Enter State" hidden />
+          </div>
+          <div class="sub-field">
+            <label class="field-label" for="city">City</label>
+            <input type="text" id="city" placeholder="Enter City" autocomplete="address-level2" />
+          </div>
+        </div>
+
+        <!-- pincode / fax -->
+        <div class="field col-half">
+          <label class="field-label" for="pincode">Pincode</label>
+          <input type="text" id="pincode" placeholder="Enter Pincode" autocomplete="postal-code" />
+        </div>
+        <div class="field col-half">
+          <label class="field-label" for="fax">Fax</label>
+          <input type="text" id="fax" placeholder="Enter Fax" />
+        </div>
+
+        <!-- tax identifiers — labels adapt to the chosen jurisdiction -->
+        <div class="field col-half">
+          <label class="field-label" id="taxLabel1" for="taxId1">GST No</label>
+          <input type="text" id="taxId1" placeholder="Enter GST No" />
+        </div>
+        <div class="field col-half">
+          <label class="field-label" id="taxLabel2" for="taxId2">PAN No</label>
+          <input type="text" id="taxId2" placeholder="Enter PAN No" />
+        </div>
+
+        <!-- emergency -->
+        <div class="field col-half">
+          <label class="field-label" for="emergencyName">Emergency Contact Name</label>
+          <input type="text" id="emergencyName" placeholder="Enter Emergency Contact Name" />
+        </div>
+        <div class="field col-half">
+          <label class="field-label" for="emergencyPhone">Emergency Phone No</label>
+          <input type="tel" id="emergencyPhone" placeholder="Enter Emergency Phone No" />
+        </div>
+
+        <div class="field col-half">
+          <label class="field-label" for="emergencyAddress">Emergency Address</label>
+          <textarea id="emergencyAddress" placeholder="Enter Emergency Address"></textarea>
+        </div>
+        <div class="field col-half">
+          <label class="field-label" for="location">Location</label>
+          <select id="location">
+            <option value="" selected>— Any —</option>
+            <option value="Mumbai">Mumbai</option>
+            <option value="Surat">Surat</option>
+            <option value="New York">New York (NYC)</option>
+            <option value="Hong Kong">Hong Kong</option>
+          </select>
+        </div>
+
+        <!-- documents -->
+        <div class="field col-2">
+          <label class="field-label" for="docType">Document Type</label>
+          <div class="doc-row">
+            <select id="docType">
+              <option value="" selected disabled>Select…</option>
+            </select>
+            <button type="button" class="btn-add-doc" id="addDocBtn"><svg><use href="#i-plus"/></svg> Add Document</button>
+          </div>
+          <input type="file" id="docFile" hidden multiple />
+          <label class="field-label" style="margin-top:16px">Selected Files</label>
+          <div class="doc-list" id="docList"><span class="doc-empty">No documents added yet.</span></div>
+          <p class="doc-note">Demo: files are listed by name only — secure upload/storage is added with the backend.</p>
+        </div>
+
+        <div class="field col-2 reg-actions">
+          <button type="submit" class="btn-primary" id="submitBtn">Submit <svg><use href="#i-arrow-r"/></svg></button>
+          <p class="form-msg" id="formMsg" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+
+      <p class="reg-foot">Already have an account? <a href="login.html">Sign in</a></p>
+    </div>
+  </main>
+
+  <!-- ===== post-submit state (success / pending) ===== -->
+  <main class="reg-shell" id="doneView" hidden>
+    <div class="reg-top">
+      <a class="reg-back" href="index.html"><svg><use href="#i-arrow-l"/></svg> Back to site</a>
+      <img class="brand-logo" src="assets/img/logo.png" alt="Pansuriya Impex" />
+    </div>
+    <div class="reg-card">
+      <div class="state-card">
+        <div class="state-badge wait"><svg><use href="#i-clock"/></svg></div>
+        <h2 class="state-title">Application submitted</h2>
+        <p class="state-text">
+          Thank you, <strong id="doneName">there</strong>. Your email has been verified and your
+          application is now <strong>awaiting admin approval</strong>. You'll be able to view the
+          live diamond inventory as soon as your account is approved.
+        </p>
+        <div class="state-actions">
+          <a class="a-solid" href="login.html">Go to sign in</a>
+          <a class="a-ghost" href="index.html">Back to home</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== OTP modal ===== -->
+  <div class="otp-back" id="otpModal" hidden>
+    <div class="otp-card">
+      <div class="otp-icon"><svg><use href="#i-shield"/></svg></div>
+      <h2 class="otp-title">Verify your email</h2>
+      <p class="otp-sub">We sent a 6-digit code to <strong id="otpEmail">your email</strong>. Enter it below to continue.</p>
+
+      <div class="otp-demo" id="otpDemo">Demo mode — your code is <b id="otpDemoCode">000000</b></div>
+
+      <div class="otp-inputs" id="otpInputs">
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1" />
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2" />
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3" />
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4" />
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5" />
+        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6" />
+      </div>
+      <p class="form-msg" id="otpMsg" role="status" aria-live="polite"></p>
+
+      <div class="otp-resend">Didn't get it? <button type="button" id="otpResend">Resend code</button></div>
+
+      <div class="otp-actions">
+        <button type="button" class="btn-ghost" id="otpCancel">Cancel</button>
+        <button type="button" class="btn-primary" id="otpVerify">Verify <svg><use href="#i-check"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/register.js?v=1"></script>
+</body>
+</html>
