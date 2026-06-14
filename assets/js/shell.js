@@ -74,9 +74,9 @@
     location.replace("login.html");
   });
 
-  /* ---------- initial view ---------- */
-  var want = null; try { want = sessionStorage.getItem("pi_view"); } catch (e) {}
-  var initial = (want && ids.indexOf(want) > -1) ? want : (ids.indexOf("dashboard") > -1 ? "dashboard" : ids[0]);
+  /* ---------- initial view: sign-in lands on the Stock inventory.
+     (Dashboard + User Management are reachable from the menu.) ---------- */
+  var initial = ids.indexOf("inventory") > -1 ? "inventory" : ids[0];
   showView(initial);
 
   /* ---------- dashboard ---------- */
