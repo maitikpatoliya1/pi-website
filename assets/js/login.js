@@ -11,9 +11,12 @@ var submitBtn = document.getElementById("submitBtn");
 
 var STOCK_URL = "stock.html?cat=natural";
 
-/* where each role lands after signing in */
+/* Everyone lands on the main app shell (stock.html). The left menu
+   then shows only the pages each role is allowed to see — admins get
+   User Management there. (admin.html still exists as a break-glass
+   bootstrap for creating the very first admin.) */
 function homeForRole(role) {
-  return role === "admin" ? "admin.html" : STOCK_URL;
+  return STOCK_URL;
 }
 
 /* already signed in (approved) -> go straight to your home */

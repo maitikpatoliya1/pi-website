@@ -1051,7 +1051,7 @@
     e.stopPropagation();
     var hm = $("#helpMenu"); hm.hidden = !hm.hidden;
   });
-  $("#menuBtn").addEventListener("click", function () { window.location.href = "index.html"; });
+  /* the top-left Menu button now opens the navigation drawer — wired in shell.js */
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
