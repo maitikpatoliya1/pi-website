@@ -59,11 +59,11 @@
       </div>
     </section>
 
-    <!-- right: sign-in form -->
+    <!-- right: sign-in / sign-up form -->
     <section class="login-form-panel">
       <div class="login-card">
-        <h1 class="welcome">Welcome</h1>
-        <p class="welcome-sub">Sign in to continue to Pansuriya Impex.</p>
+        <h1 class="welcome" id="welcomeTitle">Welcome</h1>
+        <p class="welcome-sub" id="welcomeSub">Sign in to continue to Pansuriya Impex.</p>
 
         <form class="login-fields" id="loginForm" novalidate>
           <div class="field">
@@ -86,10 +86,19 @@
             </div>
           </div>
 
-          <a class="forgot" href="#">Forgot password?</a>
+          <!-- confirm password — only shown when creating an account -->
+          <div class="field" id="confirmField" hidden>
+            <label class="field-label" for="confirm">Confirm password</label>
+            <div class="input-wrap">
+              <svg class="lead-icon"><use href="#i-lock" /></svg>
+              <input type="password" id="confirm" name="confirm" autocomplete="new-password" placeholder="Re-enter your password" />
+            </div>
+          </div>
 
-          <button type="submit" class="btn-signin">
-            Sign In <svg><use href="#i-arrow-r" /></svg>
+          <a class="forgot" href="#" id="forgotLink">Forgot password?</a>
+
+          <button type="submit" class="btn-signin" id="submitBtn">
+            <span id="submitLabel">Sign In</span> <svg><use href="#i-arrow-r" /></svg>
           </button>
 
           <div class="or-divider">or</div>
@@ -99,14 +108,15 @@
           <p class="form-msg" id="formMsg" role="status" aria-live="polite"></p>
         </form>
 
-        <p class="signup-note">
-          Don't have an account? <a href="#">Create account</a>
+        <p class="signup-note" id="signupNote">
+          Don't have an account? <a href="#" id="modeToggle">Create account</a>
         </p>
       </div>
     </section>
 
   </main>
 
+  <script src="assets/js/auth.js"></script>
   <script src="assets/js/login.js"></script>
 </body>
 </html>
