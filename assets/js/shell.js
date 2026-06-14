@@ -1,10 +1,10 @@
 /* ============================================================
    Pansuriya Impex — app shell for the main page (stock.html)
    ------------------------------------------------------------
-   • Top-left Menu button opens a left navigation drawer.
-   • The drawer shows only the pages the signed-in role may access
-     (per PIPerms), switches between in-page views, and signs out.
-   • Renders the Dashboard view (live inventory stats + reviews).
+   Supabase-backed: verifies the session + approval before showing
+   anything, then builds the role-based left menu, switches views,
+   signs out, and renders the dashboard. Requires PI_SB / PIAuth /
+   PIPerms (loaded before this file).
    ============================================================ */
 (function () {
   "use strict";
@@ -14,70 +14,74 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
     });
   }
-  if (!window.PIAuth) return;
+  if (!window.PIAuth) { location.replace("login.html"); return; }
 
-  var user = PIAuth.currentUser();
-  var role = PIAuth.currentRole() || "customer";
-  var acct = PIAuth.getAccount(user) || {};
-  var displayName = [acct.firstName, acct.lastName].filter(Boolean).join(" ") || user || "User";
+  var role = "customer", displayName = "User";
 
-  /* ---------- drawer identity ---------- */
-  $("smName").textContent = displayName;
-  $("smRole").textContent = PIAuth.roleLabel(role);
-  $("smAvatar").textContent = (displayName.charAt(0) || "U").toUpperCase();
+  /* ---------- gate: must be signed in AND approved ---------- */
+  PIAuth.getSession().then(function (session) {
+    if (!session) { location.replace("login.html"); return Promise.reject("noauth"); }
+    return PIAuth.fetchOwnProfile();
+  }).then(function (p) {
+    if (!p || p.status !== "approved") {
+      return PIAuth.logout().then(function () { location.replace("login.html"); return Promise.reject("notapproved"); });
+    }
+    role = p.role || "customer";
+    displayName = [p.firstName, p.lastName].filter(Boolean).join(" ") || p.username || "User";
+    return PIPerms.load();
+  }).then(boot).catch(function () { /* redirect already issued */ });
 
-  /* ---------- nav from permissions ---------- */
-  var pages = window.PIPerms ? PIPerms.allowedPages(role) : [];
-  var ids = pages.map(function (p) { return p.id; });
-  var nav = $("smNav");
-  nav.innerHTML = pages.map(function (p) {
-    return '<button class="sm-link" data-view="' + p.id + '">' +
-      '<svg class="ic"><use href="#' + p.icon + '"/></svg><span>' + esc(p.label) + '</span></button>';
-  }).join("");
+  function boot() {
+    /* identity */
+    $("smName").textContent = displayName;
+    $("smRole").textContent = PIAuth.roleLabel(role);
+    $("smAvatar").textContent = (displayName.charAt(0) || "U").toUpperCase();
 
-  /* ---------- view switching ---------- */
-  var VIEWS = ["dashboard", "inventory", "users"];
-  var dashRendered = false;
-  function allowed(id) { return role === "admin" || (window.PIPerms && PIPerms.canAccess(role, id)); }
-  function resolve(id) { return (id && allowed(id)) ? id : (ids[0] || "inventory"); }
+    /* nav from permissions */
+    var pages = PIPerms.allowedPages(role);
+    var ids = pages.map(function (p) { return p.id; });
+    var nav = $("smNav");
+    nav.innerHTML = pages.map(function (p) {
+      return '<button class="sm-link" data-view="' + p.id + '"><svg class="ic"><use href="#' + p.icon + '"/></svg><span>' + esc(p.label) + '</span></button>';
+    }).join("");
 
-  function showView(reqId) {
-    var id = resolve(reqId);
-    VIEWS.forEach(function (v) { var el = $("view-" + v); if (el) el.hidden = (v !== id); });
-    Array.prototype.forEach.call(nav.querySelectorAll(".sm-link"), function (b) {
-      b.classList.toggle("active", b.getAttribute("data-view") === id);
+    /* view switching */
+    var VIEWS = ["dashboard", "inventory", "users"];
+    var dashDone = false;
+    function allowed(id) { return role === "admin" || PIPerms.canAccess(role, id); }
+    function resolve(id) { return (id && allowed(id)) ? id : (ids[0] || "inventory"); }
+    function showView(req) {
+      var id = resolve(req);
+      VIEWS.forEach(function (v) { var el = $("view-" + v); if (el) el.hidden = (v !== id); });
+      Array.prototype.forEach.call(nav.querySelectorAll(".sm-link"), function (b) {
+        b.classList.toggle("active", b.getAttribute("data-view") === id);
+      });
+      if (id === "dashboard" && !dashDone) { renderDashboard(); dashDone = true; }
+      if (id === "users" && window.PIUserMgmt) PIUserMgmt.render();
+      document.title = (id === "dashboard" ? "Dashboard" : id === "users" ? "User Management" : "Diamond Inventory") + " — Pansuriya Impex";
+    }
+
+    /* drawer open/close */
+    var menu = $("sideMenu"), backdrop = $("drawerBackdrop");
+    function open() { menu.classList.add("open"); backdrop.hidden = false; menu.setAttribute("aria-hidden", "false"); }
+    function close() { menu.classList.remove("open"); backdrop.hidden = true; menu.setAttribute("aria-hidden", "true"); }
+    $("menuBtn").addEventListener("click", open);
+    $("sideClose").addEventListener("click", close);
+    backdrop.addEventListener("click", close);
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+    nav.addEventListener("click", function (e) {
+      var b = e.target.closest(".sm-link");
+      if (!b) return;
+      showView(b.getAttribute("data-view"));
+      close();
     });
-    if (id === "dashboard" && !dashRendered) { renderDashboard(); dashRendered = true; }
-    if (id === "users" && window.PIUserMgmt) PIUserMgmt.render();
-    document.title = (id === "dashboard" ? "Dashboard" : id === "users" ? "User Management" : "Diamond Inventory") + " — Pansuriya Impex";
-    try { sessionStorage.setItem("pi_view", id); } catch (e) {}
+    $("sideSignOut").addEventListener("click", function () {
+      PIAuth.logout().then(function () { location.replace("login.html"); });
+    });
+
+    /* land on Stock; Dashboard + User Management are in the menu */
+    showView(ids.indexOf("inventory") > -1 ? "inventory" : ids[0]);
   }
-
-  /* ---------- drawer open/close ---------- */
-  var menu = $("sideMenu"), backdrop = $("drawerBackdrop");
-  function openDrawer() { menu.classList.add("open"); backdrop.hidden = false; menu.setAttribute("aria-hidden", "false"); }
-  function closeDrawer() { menu.classList.remove("open"); backdrop.hidden = true; menu.setAttribute("aria-hidden", "true"); }
-  $("menuBtn").addEventListener("click", openDrawer);
-  $("sideClose").addEventListener("click", closeDrawer);
-  backdrop.addEventListener("click", closeDrawer);
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
-  nav.addEventListener("click", function (e) {
-    var b = e.target.closest(".sm-link");
-    if (!b) return;
-    showView(b.getAttribute("data-view"));
-    closeDrawer();
-  });
-
-  /* ---------- sign out ---------- */
-  $("sideSignOut").addEventListener("click", function () {
-    PIAuth.logout();
-    location.replace("login.html");
-  });
-
-  /* ---------- initial view: sign-in lands on the Stock inventory.
-     (Dashboard + User Management are reachable from the menu.) ---------- */
-  var initial = ids.indexOf("inventory") > -1 ? "inventory" : ids[0];
-  showView(initial);
 
   /* ---------- dashboard ---------- */
   function n0(x) { return (x || 0).toLocaleString("en-US", { maximumFractionDigits: 0 }); }
@@ -87,9 +91,7 @@
     var all = nat.concat(fan);
     var totalCts = 0, totalVal = 0, totalPpc = 0, available = 0, shapeCount = {}, locCount = {};
     all.forEach(function (d) {
-      totalCts += (+d.cts || 0);
-      totalVal += (+d.total || 0);
-      totalPpc += (+d.ppc || 0);
+      totalCts += (+d.cts || 0); totalVal += (+d.total || 0); totalPpc += (+d.ppc || 0);
       if ((d.status || "").toLowerCase() === "available") available++;
       var s = d.shape || "Other"; shapeCount[s] = (shapeCount[s] || 0) + 1;
       var l = d.loc || "—"; locCount[l] = (locCount[l] || 0) + 1;
@@ -136,6 +138,6 @@
         reviews.map(function (v) {
           return '<div class="rv-card"><div class="rv-top"><span class="rv-name">' + esc(v.n) + '</span><span class="rv-stars">' + stars(v.r) + '</span></div><p class="rv-text">' + esc(v.t) + '</p></div>';
         }).join("") + '</div>' +
-        '<p class="dash-note">Demo reviews — these will pull from real customer feedback once the backend is connected.</p></section>';
+        '<p class="dash-note">Demo reviews — wire these to real customer feedback next.</p></section>';
   }
 })();

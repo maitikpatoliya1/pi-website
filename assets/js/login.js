@@ -1,6 +1,5 @@
-/* Pansuriya Impex — sign-in page.
-   Account creation now lives on register.html. This page only signs
-   people in and routes by approval status. Backed by PIAuth. */
+/* Pansuriya Impex — sign-in page (Supabase-backed).
+   Sign in with username OR email; only approved accounts reach the app. */
 
 var form = document.getElementById("loginForm");
 var username = document.getElementById("username");
@@ -11,18 +10,22 @@ var submitBtn = document.getElementById("submitBtn");
 
 var STOCK_URL = "stock.html?cat=natural";
 
-/* Everyone lands on the main app shell (stock.html). The left menu
-   then shows only the pages each role is allowed to see — admins get
-   User Management there. (admin.html still exists as a break-glass
-   bootstrap for creating the very first admin.) */
-function homeForRole(role) {
-  return STOCK_URL;
+function flash(text, isError) {
+  msg.textContent = text;
+  msg.classList.toggle("error", !!isError);
+  msg.classList.add("show");
 }
 
-/* already signed in (approved) -> go straight to your home */
-if (window.PIAuth && PIAuth.isAuthenticated() && PIAuth.accountStatus(PIAuth.currentUser()) === "approved") {
-  window.location.replace(homeForRole(PIAuth.currentRole()));
-}
+/* already signed in + approved -> skip straight to the app */
+(function () {
+  if (!window.PIAuth) return;
+  PIAuth.getSession().then(function (s) {
+    if (!s) return;
+    return PIAuth.fetchOwnProfile().then(function (p) {
+      if (p && p.status === "approved") window.location.replace(STOCK_URL);
+    });
+  }).catch(function () {});
+})();
 
 /* show / hide password */
 toggle.addEventListener("click", function () {
@@ -32,15 +35,8 @@ toggle.addEventListener("click", function () {
   toggle.setAttribute("aria-label", showing ? "Show password" : "Hide password");
 });
 
-function flash(text, isError) {
-  msg.textContent = text;
-  msg.classList.toggle("error", !!isError);
-  msg.classList.add("show");
-}
-
 form.addEventListener("submit", function (e) {
   e.preventDefault();
-
   var u = username.value.trim();
   var p = password.value;
 
@@ -53,14 +49,15 @@ form.addEventListener("submit", function (e) {
   PIAuth.login(u, p)
     .then(function (res) {
       if (res.status === "approved") {
-        flash("Welcome back, " + PIAuth.roleLabel(res.role) + ". Signing you in…", false);
-        setTimeout(function () { window.location.href = homeForRole(res.role); }, 600);
+        flash("Welcome back. Loading the inventory…", false);
+        setTimeout(function () { window.location.href = STOCK_URL; }, 500);
       } else if (res.status === "rejected") {
         flash("Your application was not approved. Please contact our trading desk.", true);
+        PIAuth.logout();
         submitBtn.disabled = false;
       } else {
-        // pending (or awaiting review)
         flash("Your account is awaiting admin approval. We'll email you once it's active.", true);
+        PIAuth.logout();
         submitBtn.disabled = false;
       }
     })

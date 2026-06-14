@@ -57,3 +57,28 @@ Once everything is wired and you've registered once on the new login:
   **email OTP verification**, **login** (real auth + approval gate),
   **User Management** (shared approvals, roles, permissions), and the **dashboard**.
 - Test the full flow live on maitik.com and hand it back working.
+
+---
+
+## ⚠️ Two more one-time settings (needed for this build)
+
+### A. Re-run the schema (adds username login)
+I added a small `email_for_username` function so people can sign in with their
+**username** (not just email). Open **SQL Editor**, paste `supabase/schema.sql`
+again, and **Run** (it's idempotent — safe to re-run).
+
+### B. Make the verification email a 6-digit code
+By default Supabase emails a confirmation **link**; our sign-up screen expects a
+**6-digit code**. Change the template once:
+1. **Authentication → Email Templates → "Confirm signup"**.
+2. Add the token to the email body, e.g.:
+   `Your Pansuriya Impex verification code is: {{ .Token }}`
+3. **Save.** (You can keep or remove the link — the code is what we use.)
+
+### C. After you register once, become the admin
+Sign up through the live site, verify the email code, then in **SQL Editor** run:
+```sql
+update public.profiles set role='admin', status='approved'
+where email = 'maitikpatoliya@gmail.com';
+```
+Sign in again → you land on the app and the menu shows **User Management**.

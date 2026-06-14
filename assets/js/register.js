@@ -140,7 +140,7 @@
   docType.addEventListener("change", function () { docType.classList.remove("invalid"); });
   docFile.addEventListener("change", function () {
     Array.prototype.forEach.call(docFile.files, function (f) {
-      docs.push({ type: docType.value, name: f.name, size: f.size });
+      docs.push({ type: docType.value, name: f.name, size: f.size, file: f });
     });
     docFile.value = "";
     renderDocs();
@@ -257,23 +257,27 @@
     if ($("password").value !== $("confirm").value) { mark("confirm"); flash(msg, "Passwords do not match.", true); return; }
 
     if (!window.PIAuth) { flash(msg, "Auth module failed to load. Please refresh.", true); return; }
-    if (PIAuth.isUsernameTaken(val("username"))) { mark("username"); flash(msg, "That username is already taken.", true); return; }
-    if (PIAuth.isEmailTaken(val("email"))) { mark("email"); flash(msg, "An account with that email already exists.", true); return; }
 
     pendingProfile = collectProfile();
-    openOtp(pendingProfile.email);
+    var sbtn = $("submitBtn"); sbtn.disabled = true;
+    flash(msg, "Creating your account & emailing your code…", false);
+    PIAuth.register(pendingProfile)
+      .then(function () { sbtn.disabled = false; openOtp(pendingProfile.email); })
+      .catch(function (err) {
+        sbtn.disabled = false;
+        if (/username/i.test(err.message)) mark("username");
+        if (/email/i.test(err.message)) mark("email");
+        flash(msg, err.message || "Could not start registration.", true);
+      });
   });
 
-  /* ---------- OTP (simulated email verification) ---------- */
+  /* ---------- OTP (real email verification via Supabase) ---------- */
   var otpModal = $("otpModal"), otpInputs = Array.prototype.slice.call($("otpInputs").querySelectorAll("input"));
-  var otpMsg = $("otpMsg"), currentCode = "";
-
-  function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
+  var otpMsg = $("otpMsg");
 
   function openOtp(email) {
-    currentCode = genCode();
     $("otpEmail").textContent = email;
-    $("otpDemoCode").textContent = currentCode;   // demo: reveal the code (no real email on a static site)
+    var demo = $("otpDemo"); if (demo) demo.hidden = true;   // real code is emailed now
     otpInputs.forEach(function (i) { i.value = ""; });
     otpMsg.classList.remove("show");
     otpModal.hidden = false;
@@ -299,23 +303,22 @@
   });
 
   $("otpResend").addEventListener("click", function () {
-    currentCode = genCode();
-    $("otpDemoCode").textContent = currentCode;
-    otpInputs.forEach(function (i) { i.value = ""; });
-    flash(otpMsg, "A new code has been sent.", false);
-    otpInputs[0].focus();
+    if (!pendingProfile) return;
+    PIAuth.resendSignupOtp(pendingProfile.email)
+      .then(function () { otpInputs.forEach(function (i) { i.value = ""; }); flash(otpMsg, "A new code has been sent to your email.", false); otpInputs[0].focus(); })
+      .catch(function (err) { flash(otpMsg, err.message || "Could not resend the code.", true); });
   });
   $("otpCancel").addEventListener("click", closeOtp);
 
   $("otpVerify").addEventListener("click", function () {
     var entered = otpInputs.map(function (i) { return i.value; }).join("");
     if (entered.length < 6) { flash(otpMsg, "Enter all 6 digits.", true); return; }
-    if (entered !== currentCode) { flash(otpMsg, "Incorrect code. Please try again.", true); return; }
 
-    // verified -> create the pending account
     var btn = $("otpVerify"); btn.disabled = true;
-    pendingProfile.emailVerified = true;
-    PIAuth.register(pendingProfile)
+    flash(otpMsg, "Verifying…", false);
+    PIAuth.verifyEmailOtp(pendingProfile.email, entered)
+      .then(function () { return PIAuth.uploadDocuments(pendingProfile.documents); })
+      .then(function () { return PIAuth.logout(); })   // sign back in once an admin approves
       .then(function () {
         closeOtp();
         $("doneName").textContent = pendingProfile.firstName || pendingProfile.username;
@@ -325,7 +328,7 @@
       })
       .catch(function (err) {
         btn.disabled = false;
-        flash(otpMsg, err.message || "Could not create the account.", true);
+        flash(otpMsg, err.message || "Could not verify the code.", true);
       });
   });
 })();

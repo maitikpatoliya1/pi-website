@@ -67,6 +67,14 @@ returns boolean language sql stable security definer set search_path = public as
   select coalesce((select role = 'admin' from public.profiles where id = auth.uid()), false);
 $$;
 
+-- ---------- look up an email by username (lets people sign in with
+--            their username instead of their email; callable before login) ----------
+create or replace function public.email_for_username(uname text)
+returns text language sql stable security definer set search_path = public as $$
+  select email from public.profiles where lower(username) = lower(uname) limit 1;
+$$;
+grant execute on function public.email_for_username(text) to anon, authenticated;
+
 -- ---------- auto-create a profile from sign-up metadata ----------
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$

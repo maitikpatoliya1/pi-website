@@ -1,14 +1,14 @@
 /* ============================================================
-   Pansuriya Impex — User Management (in-page, admin only)
+   Pansuriya Impex — User Management (in-page, admin) — Supabase
    ------------------------------------------------------------
-   Rendered into #umRoot inside stock.html. Two sub-tabs:
-     • Applications — search + approve/reject KYC + assign roles
-     • Role Permissions — choose which pages each role can open
-   Exposes window.PIUserMgmt.render(). Backed by PIAuth + PIPerms.
+   Sub-tabs: Applications (search + approve/reject KYC + roles) and
+   Role Permissions (role x page matrix). Reads/writes the database
+   via PIAuth + PIPerms. Exposes window.PIUserMgmt.render().
    ============================================================ */
 (function (global) {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
+  function sb() { return global.PI_SB; }
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
@@ -19,7 +19,6 @@
   var activeFilter = "pending";
   var searchQuery = "";
 
-  /* ---------- card helpers ---------- */
   function roleOptions(cur) {
     return PIAuth.ROLES.map(function (r) {
       return '<option value="' + r + '"' + (r === cur ? " selected" : "") + ">" + esc(PIAuth.roleLabel(r)) + "</option>";
@@ -63,7 +62,6 @@
         '<select data-role-for="' + esc(a.username) + '">' + roleOptions(a.role) + "</select></label>" + actions + "</div></article>";
   }
 
-  /* ---------- applications: search + status pills + list ---------- */
   function matchesSearch(a) {
     var q = searchQuery.trim().toLowerCase();
     if (!q) return true;
@@ -79,40 +77,56 @@
     }).join("");
   }
 
-  // Re-renders only the pills + list (NOT the search input), so typing
-  // in the search box keeps focus and caret position.
+  // fetch all accounts + their documents, then paint pills + list
   function updateApplications() {
-    var all = PIAuth.listAccounts();
-    var counts = { pending: 0, approved: 0, rejected: 0, all: all.length };
-    all.forEach(function (a) { counts[a.status] = (counts[a.status] || 0) + 1; });
-
-    var pillsEl = $("umPills");
-    if (pillsEl) {
-      pillsEl.innerHTML = pillsHTML(counts);
-      Array.prototype.forEach.call(pillsEl.querySelectorAll(".um-pill"), function (b) {
-        b.addEventListener("click", function () { activeFilter = b.getAttribute("data-filter"); updateApplications(); });
-      });
-    }
-
-    var base = activeFilter === "all" ? all : all.filter(function (a) { return a.status === activeFilter; });
-    var list = base.filter(matchesSearch);
     var listEl = $("umList");
-    if (!listEl) return;
+    if (listEl && !listEl.innerHTML) listEl.innerHTML = '<div class="um-empty"><p>Loading…</p></div>';
 
-    if (!list.length) {
-      var msg = searchQuery.trim()
-        ? 'No results for &ldquo;' + esc(searchQuery.trim()) + '&rdquo;.'
-        : "No " + (activeFilter === "all" ? "" : activeFilter + " ") + "applications.";
-      listEl.innerHTML = '<div class="um-empty"><svg class="ic"><use href="#ic-inbox"/></svg><p>' + msg + "</p></div>";
-    } else {
-      listEl.innerHTML = list.map(cardHTML).join("");
-    }
-    // wire card actions
-    Array.prototype.forEach.call(listEl.querySelectorAll("[data-act]"), function (b) {
-      b.addEventListener("click", function () { PIAuth.setStatus(b.getAttribute("data-u"), b.getAttribute("data-act")); updateApplications(); });
-    });
-    Array.prototype.forEach.call(listEl.querySelectorAll("[data-role-for]"), function (sel) {
-      sel.addEventListener("change", function () { PIAuth.setRole(sel.getAttribute("data-role-for"), sel.value); updateApplications(); });
+    return Promise.all([
+      PIAuth.listAccounts(),
+      sb().from("documents").select("profile_id,doc_type,file_name").then(function (r) { return r.data || []; })
+    ]).then(function (out) {
+      var all = out[0], allDocs = out[1];
+      var byProfile = {};
+      allDocs.forEach(function (d) { (byProfile[d.profile_id] = byProfile[d.profile_id] || []).push({ type: d.doc_type, name: d.file_name }); });
+      all.forEach(function (a) { a.documents = byProfile[a.id] || []; });
+
+      var counts = { pending: 0, approved: 0, rejected: 0, all: all.length };
+      all.forEach(function (a) { counts[a.status] = (counts[a.status] || 0) + 1; });
+
+      var pillsEl = $("umPills");
+      if (pillsEl) {
+        pillsEl.innerHTML = pillsHTML(counts);
+        Array.prototype.forEach.call(pillsEl.querySelectorAll(".um-pill"), function (b) {
+          b.addEventListener("click", function () { activeFilter = b.getAttribute("data-filter"); updateApplications(); });
+        });
+      }
+
+      var base = activeFilter === "all" ? all : all.filter(function (a) { return a.status === activeFilter; });
+      var list = base.filter(matchesSearch);
+      var el = $("umList");
+      if (!el) return;
+      if (!list.length) {
+        var m = searchQuery.trim() ? 'No results for &ldquo;' + esc(searchQuery.trim()) + '&rdquo;.'
+          : "No " + (activeFilter === "all" ? "" : activeFilter + " ") + "applications.";
+        el.innerHTML = '<div class="um-empty"><svg class="ic"><use href="#ic-inbox"/></svg><p>' + m + "</p></div>";
+      } else {
+        el.innerHTML = list.map(cardHTML).join("");
+      }
+      Array.prototype.forEach.call(el.querySelectorAll("[data-act]"), function (b) {
+        b.addEventListener("click", function () {
+          b.disabled = true;
+          PIAuth.setStatus(b.getAttribute("data-u"), b.getAttribute("data-act")).then(updateApplications);
+        });
+      });
+      Array.prototype.forEach.call(el.querySelectorAll("[data-role-for]"), function (sel) {
+        sel.addEventListener("change", function () {
+          PIAuth.setRole(sel.getAttribute("data-role-for"), sel.value).then(updateApplications);
+        });
+      });
+    }).catch(function (err) {
+      var el = $("umList");
+      if (el) el.innerHTML = '<div class="um-empty"><p>Could not load accounts: ' + esc(err.message || err) + "</p></div>";
     });
   }
 
@@ -129,7 +143,6 @@
     updateApplications();
   }
 
-  /* ---------- role permissions ---------- */
   function renderPermissions() {
     var PAGES = PIPerms.PAGES, m = PIPerms.matrix();
     var head = "<th>Role</th>" + PAGES.map(function (p) { return "<th>" + esc(p.label) + "</th>"; }).join("");
@@ -146,7 +159,7 @@
     $("umBody").innerHTML =
       '<p class="um-hint">Tick which pages each role can open from the menu. The Admin row is locked to full access so no one gets locked out.</p>' +
       '<div class="perm-wrap"><table class="perm-table"><thead><tr>' + head + "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
-      '<p class="dash-note">Changes save instantly and apply to that role the next time they open the menu.</p>';
+      '<p class="dash-note">Changes save to the database and apply the next time that role opens the menu.</p>';
 
     Array.prototype.forEach.call($("umBody").querySelectorAll(".perm-box input"), function (cb) {
       cb.addEventListener("change", function () {
@@ -159,7 +172,6 @@
     });
   }
 
-  /* ---------- root ---------- */
   function renderRoot() {
     var root = $("umRoot");
     if (!root) return;

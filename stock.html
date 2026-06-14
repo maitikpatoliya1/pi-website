@@ -3,17 +3,18 @@
 <head>
   <meta charset="utf-8" />
 
-  <!-- Auth guard: only signed-in AND admin-approved accounts may see
-       the inventory. Runs before anything renders; reads storage
-       directly so it does not depend on any external script. -->
+  <!-- Auth guard (fast pre-check): if there's no Supabase session at all,
+       leave immediately. shell.js does the authoritative session +
+       approval check once the SDK has loaded. -->
   <script>
     (function () {
       try {
-        var s = JSON.parse(localStorage.getItem("pi_session") || "null");
-        if (!s || !s.user) { location.replace("login.html"); return; }
-        var accts = JSON.parse(localStorage.getItem("pi_accounts") || "{}");
-        var a = accts[String(s.user).toLowerCase()];
-        if (!a || (a.status || "pending") !== "approved") { location.replace("login.html"); return; }
+        var hasToken = false;
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && /^sb-.*-auth-token$/.test(k)) { hasToken = true; break; }
+        }
+        if (!hasToken) location.replace("login.html");
       } catch (e) {
         location.replace("login.html");
       }
@@ -29,7 +30,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://www.mydiamondinfo.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/stock.css?v=20260616" />
+  <link rel="stylesheet" href="assets/css/stock.css?v=20260617" />
   <link rel="icon" type="image/png" href="assets/img/logo.png" />
 </head>
 <body>
@@ -286,12 +287,14 @@
     </div>
   </div>
 
-  <script src="assets/js/auth.js?v=20260616"></script>
-  <script src="assets/js/perms.js?v=20260616"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/supabase-config.js?v=20260617"></script>
+  <script src="assets/js/auth.js?v=20260617"></script>
+  <script src="assets/js/perms.js?v=20260617"></script>
   <script src="assets/js/stock-data.js?v=20260613"></script>
   <script src="assets/js/fancy-data.js?v=20260613"></script>
-  <script src="assets/js/stock.js?v=20260616"></script>
-  <script src="assets/js/usermgmt.js?v=20260616"></script>
-  <script src="assets/js/shell.js?v=20260616"></script>
+  <script src="assets/js/stock.js?v=20260617"></script>
+  <script src="assets/js/usermgmt.js?v=20260617"></script>
+  <script src="assets/js/shell.js?v=20260617"></script>
 </body>
 </html>
