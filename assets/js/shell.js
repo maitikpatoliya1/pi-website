@@ -249,8 +249,10 @@
   function renderBarChart(values) {
     var max = Math.max.apply(null, values.concat([1]));
     return '<div class="sales-bar-chart" aria-label="Last 8 weeks sales">' + values.map(function (v, i) {
-      return '<div class="sales-bar-wrap"><span class="sales-bar-value">' + compactMoney(v) + '</span>' +
-        '<span class="sales-bar" style="height:' + Math.max(12, Math.round((v / max) * 100)) + '%"></span>' +
+      return '<div class="sales-bar-wrap">' +
+        '<span class="sales-bar" style="height:' + Math.max(12, Math.round((v / max) * 100)) + '%">' +
+          '<span class="sales-bar-value">' + compactMoney(v) + '</span>' +
+        '</span>' +
         '<span class="sales-bar-label">W' + (i + 1) + '</span></div>';
     }).join("") + "</div>";
   }

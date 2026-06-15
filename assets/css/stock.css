@@ -2111,6 +2111,7 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
   justify-content: center;
 }
 .sales-bar {
+  position: relative;
   width: min(52px, 100%);
   min-height: 12px;
   border-radius: 12px 12px 4px 4px;
@@ -2119,12 +2120,14 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
 }
 .sales-bar-value {
   position: absolute;
-  bottom: calc(100% + 7px);
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 7px;
   color: var(--ink-soft);
   font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
-  transform: translateY(100%);
 }
 .sales-bar-label {
   position: absolute;
@@ -2158,8 +2161,10 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
 .sales-donut {
   width: min(260px, 72vw);
   aspect-ratio: 1 / 1;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   margin: 22px auto;
   border-radius: 50%;
   background: conic-gradient(var(--ink) 0 var(--pct), var(--champagne) var(--pct) 100%);
