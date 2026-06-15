@@ -58,7 +58,7 @@
     function resolve(id) { return (id && allowed(id)) ? id : (currentIds[0] || "inventory"); }
     function defaultViewFor(r) {
       var ids = pagesFor(r).map(function (p) { return p.id; });
-      if (r === "salesperson" && ids.indexOf("dashboard") > -1) return "dashboard";
+      if (ids.indexOf("dashboard") > -1) return "dashboard";
       return ids.indexOf("inventory") > -1 ? "inventory" : (ids[0] || "inventory");
     }
 

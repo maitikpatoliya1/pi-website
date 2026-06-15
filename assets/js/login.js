@@ -9,7 +9,7 @@ var toggle = document.getElementById("togglePassword");
 var submitBtn = document.getElementById("submitBtn");
 var resetBtn = form ? form.querySelector(".btn-reset") : null;
 
-var STOCK_URL = "stock.html?cat=natural";
+var APP_URL = "stock.html";
 
 function flashTo(target, text, isError) {
   target.textContent = text;
@@ -32,7 +32,7 @@ function setLoginBusy(isBusy) {
   PIAuth.getSession().then(function (s) {
     if (!s) return;
     return PIAuth.fetchOwnProfile().then(function (p) {
-      if (p && p.status === "approved") window.location.replace(STOCK_URL);
+      if (p && p.status === "approved") window.location.replace(APP_URL);
     });
   }).catch(function () {});
 })();
@@ -59,8 +59,8 @@ form.addEventListener("submit", function (e) {
   PIAuth.login(u, p)
     .then(function (res) {
       if (res.status === "approved") {
-        flash("Welcome back. Loading the inventory…", false);
-        window.setTimeout(function () { window.location.href = STOCK_URL; }, 350);
+        flash("Welcome back. Loading your dashboard…", false);
+        window.setTimeout(function () { window.location.href = APP_URL; }, 350);
       } else if (res.status === "rejected") {
         return PIAuth.logout().then(function () {
           flash("Your application was not approved. Please contact our trading desk.", true);
