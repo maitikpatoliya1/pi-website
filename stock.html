@@ -30,7 +30,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://www.mydiamondinfo.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/stock.css?v=20260615-rolebulk" />
+  <link rel="stylesheet" href="assets/css/stock.css?v=20260619-rolebulk" />
   <link rel="icon" type="image/png" href="assets/img/logo.png" />
 </head>
 <body>
@@ -118,6 +118,12 @@
         <span class="sm-name" id="smName">—</span>
         <span class="sm-role" id="smRole">—</span>
       </div>
+    </div>
+    <!-- admin-only: preview the app from another role's perspective -->
+    <div class="sm-roleview" id="smRoleView" hidden>
+      <label class="sm-roleview-label" for="smRoleSelect"><svg class="ic"><use href="#ic-shield"/></svg> View as role</label>
+      <select class="sm-roleview-select" id="smRoleSelect"></select>
+      <span class="sm-roleview-note" id="smRoleViewNote" hidden></span>
     </div>
     <nav class="sm-nav" id="smNav"><!-- built by shell.js from role permissions --></nav>
     <button class="sm-signout" id="sideSignOut"><svg class="ic"><use href="#ic-logout"/></svg> Sign out</button>
@@ -288,13 +294,13 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/supabase-config.js?v=20260618"></script>
-  <script src="assets/js/auth.js?v=20260618"></script>
-  <script src="assets/js/perms.js?v=20260615-salesdash"></script>
+  <script src="assets/js/supabase-config.js?v=20260619"></script>
+  <script src="assets/js/auth.js?v=20260619"></script>
+  <script src="assets/js/perms.js?v=20260619-salesdash"></script>
   <script src="assets/js/stock-data.js?v=20260613"></script>
   <script src="assets/js/fancy-data.js?v=20260613"></script>
-  <script src="assets/js/stock.js?v=20260618"></script>
-  <script src="assets/js/usermgmt.js?v=20260615-rolebulk"></script>
-  <script src="assets/js/shell.js?v=20260615-salesdash"></script>
+  <script src="assets/js/stock.js?v=20260619"></script>
+  <script src="assets/js/usermgmt.js?v=20260619-rolebulk"></script>
+  <script src="assets/js/shell.js?v=20260619-salesdash"></script>
 </body>
 </html>

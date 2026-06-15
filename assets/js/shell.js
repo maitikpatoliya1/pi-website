@@ -16,7 +16,9 @@
   }
   if (!window.PIAuth) { location.replace("login.html"); return; }
 
-  var role = "customer", displayName = "User";
+  // role = the real signed-in role; viewRole = the role we render as
+  // (admins can preview other roles via the side-menu dropdown).
+  var role = "customer", viewRole = "customer", displayName = "User";
 
   /* ---------- gate: must be signed in AND approved ---------- */
   PIAuth.getSession().then(function (session) {
@@ -27,48 +29,69 @@
       return PIAuth.logout().then(function () { location.replace("login.html"); return Promise.reject("notapproved"); });
     }
     role = p.role || "customer";
+    viewRole = role;
     displayName = [p.firstName, p.lastName].filter(Boolean).join(" ") || p.username || "User";
     return PIPerms.load();
   }).then(boot).catch(function () { /* redirect already issued */ });
 
   function boot() {
-    /* identity */
+    var nav = $("smNav");
+    var menu = $("sideMenu"), backdrop = $("drawerBackdrop");
+    var VIEWS = ["dashboard", "inventory", "users"];
+    var dashRenderedFor = null;   // which role the dashboard was last rendered for
+    var currentIds = [];
+
+    /* identity (always the real signed-in person) */
     $("smName").textContent = displayName;
-    $("smRole").textContent = PIAuth.roleLabel(role);
     $("smAvatar").textContent = (displayName.charAt(0) || "U").toUpperCase();
 
-    /* nav from permissions */
-    var pages = PIPerms.allowedPages(role);
-    if (role === "customer") {
-      pages = pages.filter(function (p) { return p.id !== "dashboard"; });
+    /* pages a given role may see (customers get no dashboard) */
+    function pagesFor(r) {
+      var pages = PIPerms.allowedPages(r);
+      if (r === "customer") pages = pages.filter(function (p) { return p.id !== "dashboard"; });
+      return pages;
     }
-    var ids = pages.map(function (p) { return p.id; });
-    var nav = $("smNav");
-    nav.innerHTML = pages.map(function (p) {
-      return '<button class="sm-link" data-view="' + p.id + '"><svg class="ic"><use href="#' + p.icon + '"/></svg><span>' + esc(p.label) + '</span></button>';
-    }).join("");
-
-    /* view switching */
-    var VIEWS = ["dashboard", "inventory", "users"];
-    var dashDone = false;
     function allowed(id) {
-      if (role === "customer" && id === "dashboard") return false;
-      return role === "admin" || PIPerms.canAccess(role, id);
+      if (viewRole === "customer" && id === "dashboard") return false;
+      return viewRole === "admin" || PIPerms.canAccess(viewRole, id);
     }
-    function resolve(id) { return (id && allowed(id)) ? id : (ids[0] || "inventory"); }
+    function resolve(id) { return (id && allowed(id)) ? id : (currentIds[0] || "inventory"); }
+    function defaultViewFor(r) {
+      var ids = pagesFor(r).map(function (p) { return p.id; });
+      if (r === "salesperson" && ids.indexOf("dashboard") > -1) return "dashboard";
+      return ids.indexOf("inventory") > -1 ? "inventory" : (ids[0] || "inventory");
+    }
+
+    function renderNav() {
+      var pages = pagesFor(viewRole);
+      currentIds = pages.map(function (p) { return p.id; });
+      nav.innerHTML = pages.map(function (p) {
+        return '<button class="sm-link" data-view="' + p.id + '"><svg class="ic"><use href="#' + p.icon + '"/></svg><span>' + esc(p.label) + '</span></button>';
+      }).join("");
+    }
+    function updateRoleLabel() {
+      $("smRole").textContent = (viewRole === role)
+        ? PIAuth.roleLabel(role)
+        : PIAuth.roleLabel(role) + " · viewing as " + PIAuth.roleLabel(viewRole);
+      var note = $("smRoleViewNote");
+      if (note) {
+        if (viewRole === role) { note.hidden = true; }
+        else { note.hidden = false; note.textContent = "Previewing the " + PIAuth.roleLabel(viewRole) + " experience"; }
+      }
+    }
+
     function showView(req) {
       var id = resolve(req);
       VIEWS.forEach(function (v) { var el = $("view-" + v); if (el) el.hidden = (v !== id); });
       Array.prototype.forEach.call(nav.querySelectorAll(".sm-link"), function (b) {
         b.classList.toggle("active", b.getAttribute("data-view") === id);
       });
-      if (id === "dashboard" && !dashDone) { renderDashboard(); dashDone = true; }
+      if (id === "dashboard" && dashRenderedFor !== viewRole) { renderDashboard(); dashRenderedFor = viewRole; }
       if (id === "users" && window.PIUserMgmt) PIUserMgmt.render();
       document.title = (id === "dashboard" ? "Dashboard" : id === "users" ? "User Management" : "Diamond Inventory") + " — Pansuriya Impex";
     }
 
     /* drawer open/close */
-    var menu = $("sideMenu"), backdrop = $("drawerBackdrop");
     function open() { menu.classList.add("open"); backdrop.hidden = false; menu.setAttribute("aria-hidden", "false"); }
     function close() { menu.classList.remove("open"); backdrop.hidden = true; menu.setAttribute("aria-hidden", "true"); }
     $("menuBtn").addEventListener("click", open);
@@ -85,8 +108,28 @@
       PIAuth.logout().then(function () { location.replace("login.html"); });
     });
 
-    /* Salespeople land on their dashboard; customers stay on Stock. */
-    showView(role === "salesperson" && allowed("dashboard") ? "dashboard" : (ids.indexOf("inventory") > -1 ? "inventory" : ids[0]));
+    /* admin-only: "view as role" dropdown to preview each role's experience */
+    if (role === "admin") {
+      var rv = $("smRoleView"), sel = $("smRoleSelect");
+      if (rv && sel) {
+        sel.innerHTML = PIAuth.ROLES.map(function (r) {
+          return '<option value="' + r + '"' + (r === viewRole ? " selected" : "") + ">" +
+            esc(PIAuth.roleLabel(r)) + (r === role ? " (you)" : "") + "</option>";
+        }).join("");
+        rv.hidden = false;
+        sel.addEventListener("change", function () {
+          viewRole = sel.value;
+          renderNav();
+          updateRoleLabel();
+          showView(defaultViewFor(viewRole));
+        });
+      }
+    }
+
+    /* initial render */
+    renderNav();
+    updateRoleLabel();
+    showView(defaultViewFor(viewRole));
   }
 
   /* ---------- dashboard ---------- */
@@ -179,7 +222,7 @@
       '</div>';
   }
   function renderDashboard() {
-    if (role === "salesperson") { renderSalespersonDashboard(); return; }
+    if (viewRole === "salesperson") { renderSalespersonDashboard(); return; }
     var nat = Array.isArray(window.PI_STOCK) ? window.PI_STOCK : [];
     var fan = Array.isArray(window.PI_FANCY_STOCK) ? window.PI_FANCY_STOCK : [];
     var all = nat.concat(fan);
@@ -212,7 +255,7 @@
 
     $("dashRoot").innerHTML =
       '<div class="dash-head"><h1 class="dash-title">Dashboard</h1>' +
-        '<p class="dash-sub">Welcome back, ' + esc(displayName) + ' · ' + esc(PIAuth.roleLabel(role)) + '</p></div>' +
+        '<p class="dash-sub">Welcome back, ' + esc(displayName) + ' · ' + esc(PIAuth.roleLabel(viewRole)) + '</p></div>' +
       '<div class="stat-grid">' + cards.map(function (c) {
         return '<div class="stat-card"><span class="stat-label">' + c.l + '</span><span class="stat-value">' + c.v + '</span><span class="stat-sub">' + c.s + '</span></div>';
       }).join("") + '</div>' +
