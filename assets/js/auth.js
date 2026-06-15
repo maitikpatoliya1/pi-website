@@ -51,6 +51,7 @@
     if (/Invalid login credentials/i.test(m)) return "Incorrect username/email or password.";
     if (/Token has expired|invalid|otp/i.test(m)) return "That code is incorrect or has expired. Request a new one.";
     if (/rate limit|too many/i.test(m)) return "Too many attempts — please wait a minute and try again.";
+    if (/sending confirmation email|error sending|smtp/i.test(m)) return "Couldn't create the account right now. (Admin: turn OFF “Confirm email” in Supabase → Authentication → Providers → Email.)";
     return m;
   }
 

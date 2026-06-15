@@ -260,7 +260,7 @@
 
     pendingProfile = collectProfile();
     var sbtn = $("submitBtn"); sbtn.disabled = true;
-    flash(msg, "Creating your account & emailing your code…", false);
+    flash(msg, "Creating your account…", false);
     PIAuth.register(pendingProfile)
       .then(function () { sbtn.disabled = false; openOtp(pendingProfile.email); })
       .catch(function (err) {
@@ -271,13 +271,18 @@
       });
   });
 
-  /* ---------- OTP (real email verification via Supabase) ---------- */
+  /* ---------- OTP (TEMPORARY on-screen code; real email OTP comes later
+     once SMTP is set up — then swap back to PIAuth.verifyEmailOtp) ---------- */
   var otpModal = $("otpModal"), otpInputs = Array.prototype.slice.call($("otpInputs").querySelectorAll("input"));
-  var otpMsg = $("otpMsg");
+  var otpMsg = $("otpMsg"), currentCode = "";
+
+  function genCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
 
   function openOtp(email) {
+    currentCode = genCode();
     $("otpEmail").textContent = email;
-    var demo = $("otpDemo"); if (demo) demo.hidden = true;   // real code is emailed now
+    var demo = $("otpDemo"); if (demo) demo.hidden = false;            // show the code on screen (temporary)
+    var dc = $("otpDemoCode"); if (dc) dc.textContent = currentCode;
     otpInputs.forEach(function (i) { i.value = ""; });
     otpMsg.classList.remove("show");
     otpModal.hidden = false;
@@ -303,21 +308,23 @@
   });
 
   $("otpResend").addEventListener("click", function () {
-    if (!pendingProfile) return;
-    PIAuth.resendSignupOtp(pendingProfile.email)
-      .then(function () { otpInputs.forEach(function (i) { i.value = ""; }); flash(otpMsg, "A new code has been sent to your email.", false); otpInputs[0].focus(); })
-      .catch(function (err) { flash(otpMsg, err.message || "Could not resend the code.", true); });
+    currentCode = genCode();
+    var dc = $("otpDemoCode"); if (dc) dc.textContent = currentCode;
+    otpInputs.forEach(function (i) { i.value = ""; });
+    flash(otpMsg, "A new code has been generated.", false);
+    otpInputs[0].focus();
   });
   $("otpCancel").addEventListener("click", closeOtp);
 
   $("otpVerify").addEventListener("click", function () {
     var entered = otpInputs.map(function (i) { return i.value; }).join("");
     if (entered.length < 6) { flash(otpMsg, "Enter all 6 digits.", true); return; }
+    if (entered !== currentCode) { flash(otpMsg, "Incorrect code. Please try again.", true); return; }
 
+    // account was already created on submit (Supabase signUp); finish up:
     var btn = $("otpVerify"); btn.disabled = true;
-    flash(otpMsg, "Verifying…", false);
-    PIAuth.verifyEmailOtp(pendingProfile.email, entered)
-      .then(function () { return PIAuth.uploadDocuments(pendingProfile.documents); })
+    flash(otpMsg, "Finishing…", false);
+    PIAuth.uploadDocuments(pendingProfile.documents)
       .then(function () { return PIAuth.logout(); })   // sign back in once an admin approves
       .then(function () {
         closeOtp();
@@ -328,7 +335,7 @@
       })
       .catch(function (err) {
         btn.disabled = false;
-        flash(otpMsg, err.message || "Could not verify the code.", true);
+        flash(otpMsg, err.message || "Could not finish. Please try again.", true);
       });
   });
 })();
