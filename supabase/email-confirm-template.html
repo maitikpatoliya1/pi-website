@@ -1,0 +1,19 @@
+<!-- Pansuriya Impex — "Confirm sign up" email template.
+     Paste this into Supabase → Authentication → Email Templates → "Confirm signup" → Body
+     (only editable AFTER custom SMTP is enabled). {{ .Token }} is the 6-digit code. -->
+<div style="font-family:Arial,Helvetica,sans-serif;background:#0d0d10;padding:32px 16px;margin:0">
+  <div style="max-width:480px;margin:0 auto;background:#101015;border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:34px 32px">
+    <h1 style="font-family:Georgia,'Times New Roman',serif;color:#fbfaf7;font-size:24px;font-weight:600;margin:0 0 6px">Pansuriya Impex</h1>
+    <p style="color:#b9bac2;font-size:15px;line-height:1.6;margin:0 0 26px">Verify your email address to finish creating your trade account.</p>
+
+    <p style="color:#cfc6b0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;margin:0 0 10px">Your verification code</p>
+    <div style="font-size:34px;letter-spacing:10px;font-weight:bold;color:#ffffff;background:rgba(207,198,176,0.10);border:1px solid rgba(207,198,176,0.32);border-radius:12px;padding:18px 0;text-align:center">{{ .Token }}</div>
+
+    <p style="color:#8a8b94;font-size:13px;line-height:1.6;margin:24px 0 0">
+      Enter this code on the registration page to verify your email. It expires shortly.
+      If you didn't request this, you can safely ignore this email.
+    </p>
+    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:26px 0 14px">
+    <p style="color:#6a6f7e;font-size:12px;margin:0">Pansuriya Impex — The Customer Company · diamonds since 1972</p>
+  </div>
+</div>
