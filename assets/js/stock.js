@@ -156,6 +156,40 @@
   var resultCount = $("#resultCount");
   var emptyState = $("#emptyState");
   function activeStock() { return DATASETS[state.cat] || []; }
+  function findStoneById(id) {
+    id = String(id || "");
+    var sets = [activeStock(), DATASETS.natural || [], DATASETS.fancy || []];
+    for (var s = 0; s < sets.length; s++) {
+      for (var i = 0; i < sets[s].length; i++) {
+        if (String(sets[s][i].id) === id) return sets[s][i];
+      }
+    }
+    return null;
+  }
+  function isInCart(d) {
+    return !!(window.PICart && d && window.PICart.has(d.id));
+  }
+  function cartButtonHTML(d, cls) {
+    var on = isInCart(d);
+    return '<button type="button" class="' + esc(cls || "cart-add-btn") + (on ? " in-cart" : "") + '" data-cart-add="' + esc(d.id || "") + '" aria-pressed="' + (on ? "true" : "false") + '">' +
+      svg(on ? "ic-check" : "ic-cart") + '<span>' + (on ? "In cart" : "Add to cart") + "</span></button>";
+  }
+  function refreshCartButtons() {
+    document.querySelectorAll("[data-cart-add]").forEach(function (btn) {
+      var d = findStoneById(btn.getAttribute("data-cart-add"));
+      var on = isInCart(d);
+      btn.classList.toggle("in-cart", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.innerHTML = svg(on ? "ic-check" : "ic-cart") + '<span>' + (on ? "In cart" : "Add to cart") + "</span>";
+    });
+  }
+  function addCartFromButton(btn) {
+    if (!window.PICart) return;
+    var d = findStoneById(btn.getAttribute("data-cart-add"));
+    if (!d) return;
+    window.PICart.add(d);
+    refreshCartButtons();
+  }
   function emptyFilterState() {
     return {
       lab: [], shape: [], col: [], cla: [], cut: [], pol: [], sym: [], flr: [], loc: [], key: [],
@@ -331,6 +365,7 @@
         '<td class="num col-price"><span class="total">' + fmtUSD(d.total) + "</span></td>" +
         "<td>" + esc(d.loc || "—") + "</td>" +
         '<td class="cert">' + cert + "</td>" +
+        '<td>' + cartButtonHTML(d, "cart-add-btn cart-add-btn-sm") + "</td>" +
       "</tr>"
     );
   }
@@ -390,6 +425,7 @@
         /* actions */
         '<div class="dcol dcol-actions">' +
           '<span class="dcol-h">Actions</span>' +
+          cartButtonHTML(d, "more-btn cart-add-btn") +
           (d.media ? '<a class="more-btn" href="' + esc(d.media) + '" target="_blank" rel="noopener">' + svg("ic-search") + " More details</a>" : "") +
           (d.rpt ? '<a class="more-btn ghost" href="https://www.gia.edu/report-check?reportno=' + encodeURIComponent(d.rpt) + '" target="_blank" rel="noopener">' + svg("ic-cert") + " Verify " + esc(d.lab || "") + "</a>" : "") +
         "</div>" +
@@ -432,6 +468,7 @@
           '<div><span>Diamond price</span><strong>Price/Ct: ' + fmtUSD0(d.ppc) + "/ct</strong></div>" +
           '<div><span class="' + discCls + '">' + disc + '</span><strong class="gprice-total">' + fmtUSD(d.total) + "</strong></div>" +
         "</div>" +
+        '<div class="gcard-actions">' + cartButtonHTML(d, "cart-add-btn gcart-btn") + "</div>" +
       "</article>"
     );
   }
@@ -462,6 +499,12 @@
      ROW EXPAND (list) + CARD DETAIL PAGE (grid)
      ============================================================ */
   tbody.addEventListener("click", function (e) {
+    var cartBtn = e.target.closest("[data-cart-add]");
+    if (cartBtn) {
+      e.stopPropagation();
+      addCartFromButton(cartBtn);
+      return;
+    }
     var row = e.target.closest("tr.drow");
     if (!row || e.target.closest(".row-check")) return;
     toggleRow(row);
@@ -477,7 +520,7 @@
     var tr = document.createElement("tr");
     tr.className = "detail-row";
     tr.style.setProperty("--detail-width", tableScroll.clientWidth + "px");
-    tr.innerHTML = '<td colspan="19">' + detailHTML(filtered[i]) + "</td>";
+    tr.innerHTML = '<td colspan="20">' + detailHTML(filtered[i]) + "</td>";
     row.parentNode.insertBefore(tr, row.nextElementSibling);
   }
   function syncDetailWidths() {
@@ -583,6 +626,10 @@
             "</div>" +
           "</div>" +
           '<div class="detail-flags">' + flagsLine(d) + "</div>" +
+          '<div class="detail-actions">' +
+            cartButtonHTML(d, "cart-add-btn detail-cart-btn") +
+            '<button type="button" class="cart-view-btn" data-open-cart>' + svg("ic-cart") + " View cart</button>" +
+          "</div>" +
           '<div class="stock-spec-grid">' +
             specItem("Shape", esc(d.shape || "—")) +
             specItem("Cut", esc(d.cut || "—")) +
@@ -627,11 +674,18 @@
     else tableScroll.scrollTop = detailReturnScroll;
   }
   gridView.addEventListener("click", function (e) {
+    var cartBtn = e.target.closest("[data-cart-add]");
+    if (cartBtn) {
+      e.stopPropagation();
+      addCartFromButton(cartBtn);
+      return;
+    }
     var card = e.target.closest(".gcard");
     if (!card) return;
     showDetailPage(+card.getAttribute("data-i"));
   });
   gridView.addEventListener("keydown", function (e) {
+    if (e.target.closest("[data-cart-add]")) return;
     if (e.key !== "Enter" && e.key !== " ") return;
     var card = e.target.closest(".gcard");
     if (!card) return;
@@ -641,6 +695,16 @@
   detailView.addEventListener("click", function (e) {
     if (e.target.closest("#detailBack")) {
       hideDetailPage();
+      return;
+    }
+    var cartBtn = e.target.closest("[data-cart-add]");
+    if (cartBtn) {
+      addCartFromButton(cartBtn);
+      return;
+    }
+    if (e.target.closest("[data-open-cart]")) {
+      hideDetailPage();
+      if (window.PIShell) window.PIShell.showView("cart");
       return;
     }
     var tab = e.target.closest("[data-media-tab]");
@@ -663,6 +727,7 @@
       else if (vid.pause) vid.pause();
     });
   });
+  window.addEventListener("pi-cart-change", refreshCartButtons);
 
   /* ============================================================
      TOOLBAR — search, chips, sort, price

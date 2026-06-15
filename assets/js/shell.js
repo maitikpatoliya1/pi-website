@@ -37,7 +37,7 @@
   function boot() {
     var nav = $("smNav");
     var menu = $("sideMenu"), backdrop = $("drawerBackdrop");
-    var VIEWS = ["dashboard", "inventory", "users"];
+    var VIEWS = ["dashboard", "inventory", "cart", "users"];
     var dashRenderedFor = null;   // which role the dashboard was last rendered for
     var currentIds = [];
 
@@ -66,8 +66,10 @@
       var pages = pagesFor(viewRole);
       currentIds = pages.map(function (p) { return p.id; });
       nav.innerHTML = pages.map(function (p) {
-        return '<button class="sm-link" data-view="' + p.id + '"><svg class="ic"><use href="#' + p.icon + '"/></svg><span>' + esc(p.label) + '</span></button>';
+        return '<button class="sm-link" data-view="' + p.id + '"><svg class="ic"><use href="#' + p.icon + '"/></svg><span>' + esc(p.label) + '</span>' +
+          (p.id === "cart" ? '<span class="sm-count" data-cart-nav-count hidden>0</span>' : '') + '</button>';
       }).join("");
+      if (window.PICart) window.PICart.updateBadges();
     }
     function updateRoleLabel() {
       $("smRole").textContent = (viewRole === role)
@@ -87,8 +89,9 @@
         b.classList.toggle("active", b.getAttribute("data-view") === id);
       });
       if (id === "dashboard" && dashRenderedFor !== viewRole) { renderDashboard(); dashRenderedFor = viewRole; }
+      if (id === "cart" && window.PICart) window.PICart.render();
       if (id === "users" && window.PIUserMgmt) PIUserMgmt.render();
-      document.title = (id === "dashboard" ? "Dashboard" : id === "users" ? "User Management" : "Diamond Inventory") + " — Pansuriya Impex";
+      document.title = (id === "dashboard" ? "Dashboard" : id === "users" ? "User Management" : id === "cart" ? "Cart" : "Diamond Inventory") + " — Pansuriya Impex";
     }
 
     /* drawer open/close */
@@ -107,6 +110,11 @@
     $("sideSignOut").addEventListener("click", function () {
       PIAuth.logout().then(function () { location.replace("login.html"); });
     });
+    if ($("cartBtn")) {
+      $("cartBtn").addEventListener("click", function () {
+        if (allowed("cart")) showView("cart");
+      });
+    }
 
     /* admin-only: "view as role" dropdown to preview each role's experience */
     if (role === "admin") {
@@ -130,6 +138,7 @@
     renderNav();
     updateRoleLabel();
     showView(defaultViewFor(viewRole));
+    window.PIShell = { showView: showView };
   }
 
   /* ---------- dashboard ---------- */

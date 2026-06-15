@@ -13,14 +13,15 @@
   var PAGES = [
     { id: "dashboard", label: "Dashboard",      icon: "ic-gauge" },
     { id: "inventory", label: "Stock",          icon: "ic-list" },
+    { id: "cart",      label: "Cart",           icon: "ic-cart" },
     { id: "users",     label: "User Management", icon: "ic-users" }
   ];
   var ADMIN_ONLY = ["users"];
   var DEFAULTS = {
-    admin:         ["dashboard", "inventory", "users"],
-    stock_manager: ["dashboard", "inventory"],
-    salesperson:   ["dashboard", "inventory"],
-    customer:      ["inventory"]
+    admin:         ["dashboard", "inventory", "cart", "users"],
+    stock_manager: ["dashboard", "inventory", "cart"],
+    salesperson:   ["dashboard", "inventory", "cart"],
+    customer:      ["inventory", "cart"]
   };
 
   function withDefaults(m) {
