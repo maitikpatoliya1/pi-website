@@ -1436,6 +1436,31 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
 .um-empty .ic { width: 42px; height: 42px; opacity: 0.5; margin-bottom: 12px; }
 
 .um-hint { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 16px; }
+.perm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.perm-head .um-hint { margin-bottom: 0; max-width: 720px; }
+.perm-bulk {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 14px 32px -24px rgba(28, 33, 48, 0.55);
+}
+.perm-bulk:hover { filter: brightness(1.06); }
+.perm-bulk:disabled { opacity: 0.62; cursor: default; filter: none; }
 .perm-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .perm-table { width: 100%; border-collapse: collapse; min-width: 460px; }
 .perm-table th, .perm-table td { padding: 14px 16px; text-align: center; border-bottom: 1px solid var(--line-soft); }

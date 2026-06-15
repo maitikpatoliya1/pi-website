@@ -145,7 +145,22 @@
 
   function renderPermissions() {
     var PAGES = PIPerms.PAGES, m = PIPerms.matrix();
+    var editableRoles = PIAuth.ROLES.filter(function (rl) { return rl !== "admin"; });
     var head = "<th>Role</th>" + PAGES.map(function (p) { return "<th>" + esc(p.label) + "</th>"; }).join("");
+    function stockOnlyPages(rl) {
+      return editablePages(rl).indexOf("inventory") > -1 ? ["inventory"] : [];
+    }
+    function editablePages(rl) {
+      return PAGES.filter(function (p) { return PIPerms.isEditable(rl, p.id); }).map(function (p) { return p.id; });
+    }
+    function allEditableOn() {
+      return editableRoles.every(function (rl) {
+        var current = m[rl] || [];
+        return editablePages(rl).every(function (id) { return current.indexOf(id) > -1; });
+      });
+    }
+    var shouldEnableAll = !allEditableOn();
+    var bulkLabel = shouldEnableAll ? "Enable all role views" : "Stock only for all roles";
     var rows = PIAuth.ROLES.map(function (rl) {
       var cells = PAGES.map(function (p) {
         var on = (m[rl] || []).indexOf(p.id) > -1;
@@ -157,9 +172,27 @@
     }).join("");
 
     $("umBody").innerHTML =
-      '<p class="um-hint">Tick which pages each role can open from the menu. The Admin row is locked to full access so no one gets locked out.</p>' +
+      '<div class="perm-head">' +
+        '<p class="um-hint">Tick which pages each role can open from the menu. The Admin row is locked to full access so no one gets locked out.</p>' +
+        '<button type="button" class="perm-bulk" id="permBulkToggle">' + bulkLabel + '</button>' +
+      '</div>' +
       '<div class="perm-wrap"><table class="perm-table"><thead><tr>' + head + "</tr></thead><tbody>" + rows + "</tbody></table></div>" +
-      '<p class="dash-note">Changes save to the database and apply the next time that role opens the menu.</p>';
+      '<p class="dash-note" id="permNote">Changes save to the database and apply the next time that role opens the menu.</p>';
+
+    $("permBulkToggle").addEventListener("click", function () {
+      var btn = $("permBulkToggle");
+      var note = $("permNote");
+      btn.disabled = true;
+      note.textContent = "Saving role views…";
+      Promise.all(editableRoles.map(function (rl) {
+        return PIPerms.setRolePages(rl, shouldEnableAll ? editablePages(rl) : stockOnlyPages(rl));
+      })).then(function () {
+        renderPermissions();
+      }).catch(function () {
+        btn.disabled = false;
+        note.textContent = "Could not save role views. Please try again.";
+      });
+    });
 
     Array.prototype.forEach.call($("umBody").querySelectorAll(".perm-box input"), function (cb) {
       cb.addEventListener("change", function () {
