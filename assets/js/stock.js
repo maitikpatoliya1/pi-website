@@ -49,6 +49,14 @@
   function imgURL(d) { return MEDIA + "/" + d.id + "/" + d.id + ".jpg"; }
   function videoURL(d) { return MEDIA + "/" + d.id + "/" + d.id + ".mp4"; }
   function v360URL(d) { return MEDIA + "/Vision360.html?d=" + d.id; }
+  function certificateURL(d) {
+    if (!d.rpt) return "";
+    if (/igi/i.test(d.lab || "")) return "https://www.igi.org/Verify-Your-Report/";
+    return "https://www.gia.edu/report-check?reportno=" + encodeURIComponent(d.rpt);
+  }
+  function certificateLabel(d) {
+    return /igi/i.test(d.lab || "") ? "Open IGI verification" : "Open GIA report";
+  }
   function photoTag(d, cls, loading) {
     return '<img class="' + cls + '" src="' + esc(imgURL(d)) + '" loading="' + (loading || "eager") + '" decoding="async" alt="" onerror="this.style.display=\'none\'" />';
   }
@@ -490,6 +498,50 @@
   function degreeValue(v) {
     return v ? esc(v) + "°" : "—";
   }
+  function mediaViewerHTML(d) {
+    var img = esc(imgURL(d));
+    var video = esc(videoURL(d));
+    var vision = esc(v360URL(d));
+    var cert = certificateURL(d);
+    var certHref = cert ? ' href="' + esc(cert) + '" target="_blank" rel="noopener"' : "";
+    return (
+      '<div class="stock-detail-media detail-media-viewer" data-detail-media>' +
+        '<div class="detail-media-stage">' +
+          '<div class="detail-media-panel active" data-media-panel="video">' +
+            '<video class="detail-video" src="' + video + '" poster="' + img + '" autoplay muted loop playsinline controls preload="metadata" onerror="this.closest(\'.detail-media-panel\').classList.add(\'media-error\')"></video>' +
+            '<div class="media-fallback">' +
+              svg("ic-video") +
+              '<strong>Video preview unavailable</strong>' +
+              '<a href="' + vision + '" target="_blank" rel="noopener">Open 360° viewer</a>' +
+            "</div>" +
+            '<a class="media-open" href="' + vision + '" target="_blank" rel="noopener">' + svg("ic-play") + " 360° view</a>" +
+          "</div>" +
+          '<div class="detail-media-panel" data-media-panel="certificate" hidden>' +
+            '<div class="certificate-preview">' +
+              svg("ic-cert", "certificate-mark") +
+              '<span class="cert-eyebrow">' + esc(d.lab || "Lab") + " certificate</span>" +
+              '<strong>' + esc(d.rpt || "Not available") + "</strong>" +
+              '<span>' + esc(titleLine(d)) + "</span>" +
+              (cert ? '<a class="cert-open"' + certHref + ">" + certificateLabel(d) + "</a>" : '<span class="cert-open disabled">No certificate link</span>') +
+            "</div>" +
+          "</div>" +
+          '<div class="detail-media-panel" data-media-panel="image" hidden>' +
+            svg(shapeIcon(d.shape), "sh") +
+            '<img class="detail-image" src="' + img + '" alt="' + esc(d.shape || "Diamond") + ' diamond" decoding="async" onerror="this.style.display=\'none\';this.closest(\'.detail-media-panel\').classList.add(\'media-error\')" />' +
+            '<div class="media-fallback">' +
+              svg("ic-image") +
+              '<strong>Image unavailable</strong>' +
+            "</div>" +
+          "</div>" +
+        "</div>" +
+        '<div class="detail-media-tabs" role="group" aria-label="Stone media">' +
+          '<button type="button" class="detail-media-tab active" data-media-tab="video" aria-pressed="true">' + svg("ic-video") + " Video</button>" +
+          '<button type="button" class="detail-media-tab" data-media-tab="certificate" aria-pressed="false"' + (cert ? "" : " disabled") + ">" + svg("ic-cert") + " Certificate</button>" +
+          '<button type="button" class="detail-media-tab" data-media-tab="image" aria-pressed="false">' + svg("ic-image") + " Image</button>" +
+        "</div>" +
+      "</div>"
+    );
+  }
   function detailPageHTML(d) {
     var disc = d.dis != null ? (d.dis > 0 ? "+" + d.dis : d.dis) + "%" : "—";
     var discCls = d.dis != null && d.dis <= -30 ? "disc up" : "disc";
@@ -502,10 +554,7 @@
         "</button>" +
       "</div>" +
       '<article class="stock-detail-card">' +
-        '<div class="stock-detail-media">' +
-          svg(shapeIcon(d.shape), "sh") +
-          '<img src="' + esc(imgURL(d)) + '" alt="' + esc(d.shape || "Diamond") + ' diamond" decoding="async" />' +
-        "</div>" +
+        mediaViewerHTML(d) +
         '<div class="stock-detail-info">' +
           '<h2>' + esc(titleLine(d)) + "</h2>" +
           '<div class="detail-pills">' +
@@ -541,7 +590,7 @@
             specItem("Ratio", fmtRatio(d.ratio)) +
             specItem("Milky", milkyShort(d)) +
             specItem("Stock ID", esc(d.id || "—")) +
-            specItem("Certificate", d.rpt ? '<a href="https://www.gia.edu/report-check?reportno=' + encodeURIComponent(d.rpt) + '" target="_blank" rel="noopener">' + esc(d.rpt) + "</a>" : "—") +
+            specItem("Certificate", d.rpt ? '<a href="' + esc(certificateURL(d)) + '" target="_blank" rel="noopener">' + esc(d.rpt) + "</a>" : "—") +
             specItem("Key to symbols", esc(d.keys || "—")) +
           "</div>" +
         "</div>" +
@@ -554,6 +603,8 @@
     if (!d) return;
     detailReturnScroll = state.view === "grid" ? gridView.scrollTop : tableScroll.scrollTop;
     detailView.innerHTML = detailPageHTML(d);
+    var video = detailView.querySelector(".detail-video");
+    if (video && video.play) video.play().catch(function () {});
     tabsNav.hidden = true;
     invCard.hidden = true;
     detailView.hidden = false;
@@ -580,7 +631,29 @@
     showDetailPage(+card.getAttribute("data-i"));
   });
   detailView.addEventListener("click", function (e) {
-    if (e.target.closest("#detailBack")) hideDetailPage();
+    if (e.target.closest("#detailBack")) {
+      hideDetailPage();
+      return;
+    }
+    var tab = e.target.closest("[data-media-tab]");
+    if (!tab || tab.disabled) return;
+    var viewer = tab.closest("[data-detail-media]");
+    if (!viewer) return;
+    var target = tab.getAttribute("data-media-tab");
+    Array.prototype.forEach.call(viewer.querySelectorAll("[data-media-tab]"), function (btn) {
+      var on = btn.getAttribute("data-media-tab") === target;
+      btn.classList.toggle("active", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    Array.prototype.forEach.call(viewer.querySelectorAll("[data-media-panel]"), function (panel) {
+      var on = panel.getAttribute("data-media-panel") === target;
+      panel.hidden = !on;
+      panel.classList.toggle("active", on);
+    });
+    Array.prototype.forEach.call(viewer.querySelectorAll("video"), function (vid) {
+      if (target === "video" && vid.play) vid.play().catch(function () {});
+      else if (vid.pause) vid.pause();
+    });
   });
 
   /* ============================================================
