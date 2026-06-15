@@ -1,9 +1,9 @@
 /* ============================================================
    Pansuriya Impex — authentication + accounts (Supabase-backed)
    ------------------------------------------------------------
-   Real backend: accounts live in Postgres (profiles), email is
-   verified by a 6-digit OTP, KYC documents go to Storage, and an
-   admin approves / assigns roles. Row Level Security enforces access.
+   Real backend: accounts live in Postgres (profiles), KYC documents
+   go to Storage, and an admin approves / assigns roles. Row Level
+   Security enforces access.
    Requires window.PI_SB (assets/js/supabase-config.js).
    All methods are async (return Promises).
    ============================================================ */
@@ -47,12 +47,10 @@
   function friendly(err) {
     var m = (err && (err.message || err.msg)) || "Something went wrong. Please try again.";
     if (/already registered|already been registered|already exists|duplicate/i.test(m)) return "An account with that email or username already exists.";
-    if (/Email not confirmed/i.test(m)) return "Please verify your email first — check your inbox for the 6-digit code.";
+    if (/Email not confirmed/i.test(m)) return "This account is not ready yet. Please contact the team.";
     if (/Invalid login credentials/i.test(m)) return "Incorrect username/email or password.";
-    if (/Token has expired|invalid|otp/i.test(m)) return "That code is incorrect or has expired. Request a new one.";
     if (/rate limit|too many/i.test(m)) return "Too many attempts — please wait a minute and try again.";
-    if (/email logins are disabled|email provider/i.test(m)) return "Email OTP is not enabled yet. Please try again in a few minutes.";
-    if (/sending confirmation email|error sending|smtp/i.test(m)) return "Email OTP could not be sent yet. Please try again in a few minutes.";
+    if (/function|network|fetch/i.test(m)) return "Registration service is not reachable. Please try again.";
     return m;
   }
 
@@ -67,18 +65,38 @@
     });
   }
 
-  function compactProfile(p, email) {
-    return {
-      email: email || (p ? p.email : null),
-      username: p ? p.username : null,
-      status: p ? p.status : "pending",
-      role: p ? p.role : "customer"
-    };
+  function registrationFunctionUrl() {
+    var base = (global.PI_SUPABASE_URL || "").replace(/\/$/, "");
+    if (!base) throw new Error("Registration service is not configured.");
+    return base + "/functions/v1/register-account";
   }
 
-  function clearPasswordOnlySession() {
-    cachedProfile = null;
-    return sb().auth.signOut({ scope: "local" }).catch(function () {});
+  function callRegistrationFunction(profile) {
+    var email = String(profile.email || "").trim().toLowerCase();
+    var url;
+    try {
+      url = registrationFunctionUrl();
+    } catch (err) {
+      return Promise.reject(err);
+    }
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": global.PI_SUPABASE_ANON_KEY || "",
+        "Authorization": "Bearer " + (global.PI_SUPABASE_ANON_KEY || "")
+      },
+      body: JSON.stringify({
+        email: email,
+        password: profile.password,
+        metadata: metaFromProfile(profile)
+      })
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        if (!res.ok) throw new Error(friendly({ message: data.error || data.message || "Could not create the account right now." }));
+        return data;
+      });
+    });
   }
 
   var PIAuth = {
@@ -87,26 +105,18 @@
     roleLabel: function (r) { return ROLE_LABELS[r] || "Customer"; },
 
     /* ---------- registration ---------- */
-    // Creates the auth user; a DB trigger builds the pending profile from
-    // the metadata. Email is unconfirmed until the OTP is verified.
+    // Temporarily creates an already-confirmed auth user through an Edge
+    // Function; a DB trigger builds the pending profile from the metadata.
     register: function (profile) {
-      return sb().auth.signUp({
-        email: String(profile.email || "").trim(),
-        password: profile.password,
-        options: { data: metaFromProfile(profile), emailRedirectTo: location.origin + "/login.html" }
+      var email = String(profile.email || "").trim().toLowerCase();
+      var created = null;
+      return callRegistrationFunction(profile).then(function (data) {
+        created = data;
+        return sb().auth.signInWithPassword({ email: email, password: profile.password });
       }).then(function (res) {
         if (res.error) throw new Error(friendly(res.error));
-        return { email: String(profile.email || "").trim(), needsConfirmation: !res.data.session };
+        return { email: email, userId: created && created.userId, needsConfirmation: false };
       });
-    },
-    // Verify the 6-digit emailed signup OTP -> confirms email + starts a session.
-    verifyEmailOtp: function (email, token) {
-      return sb().auth.verifyOtp({ email: email, token: String(token).trim(), type: "email" })
-        .then(function (res) { if (res.error) throw new Error(friendly(res.error)); return res.data; });
-    },
-    resendSignupOtp: function (email) {
-      return sb().auth.resend({ type: "signup", email: email })
-        .then(function (res) { if (res.error) throw new Error(friendly(res.error)); return true; });
     },
 
     // Upload KYC files to Storage + record metadata. Best-effort: a
@@ -144,66 +154,6 @@
       }).then(function (p) {
         cachedProfile = p;
         return { username: p ? p.username : null, status: p ? p.status : "pending", role: p ? p.role : "customer" };
-      });
-    },
-
-    // Password + email OTP login. The password is checked first, but the
-    // password session is cleared before sending the email code.
-    requestLoginOtp: function (identifier, password) {
-      var resolvedEmail = "";
-      return emailForIdentifier(identifier).then(function (email) {
-        resolvedEmail = email;
-        return sb().auth.signInWithPassword({ email: email, password: password });
-      }).then(function (res) {
-        if (res.error) throw new Error(friendly(res.error));
-        return PIAuth.fetchOwnProfile();
-      }).then(function (p) {
-        var summary = compactProfile(p, resolvedEmail);
-        return clearPasswordOnlySession().then(function () {
-          if (summary.status !== "approved") return summary;
-          return sb().auth.signInWithOtp({
-            email: resolvedEmail,
-            options: {
-              shouldCreateUser: false,
-              emailRedirectTo: location.origin + "/stock.html?cat=natural"
-            }
-          }).then(function (otp) {
-            if (otp.error) throw new Error(friendly(otp.error));
-            summary.otpRequired = true;
-            return summary;
-          });
-        });
-      });
-    },
-
-    resendLoginOtp: function (email) {
-      return sb().auth.signInWithOtp({
-        email: String(email || "").trim(),
-        options: {
-          shouldCreateUser: false,
-          emailRedirectTo: location.origin + "/stock.html?cat=natural"
-        }
-      }).then(function (res) {
-        if (res.error) throw new Error(friendly(res.error));
-        return true;
-      });
-    },
-
-    verifyLoginOtp: function (email, token) {
-      return sb().auth.verifyOtp({
-        email: String(email || "").trim(),
-        token: String(token || "").trim(),
-        type: "email"
-      }).then(function (res) {
-        if (res.error) throw new Error(friendly(res.error));
-        return PIAuth.fetchOwnProfile();
-      }).then(function (p) {
-        cachedProfile = p;
-        var summary = compactProfile(p, email);
-        if (summary.status !== "approved") {
-          return PIAuth.logout().then(function () { return summary; });
-        }
-        return summary;
       });
     },
 

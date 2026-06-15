@@ -1,5 +1,5 @@
 /* ============================================================
-   Pansuriya Impex — registration / OTP / pending / admin
+   Pansuriya Impex — registration / pending / admin
    Matches the login + home theme (dark luxury, champagne accent).
    ============================================================ */
 
@@ -242,61 +242,6 @@ img { display: block; max-width: 100%; }
 .reg-foot a { color: #fff; font-weight: 600; }
 .reg-foot a:hover { text-decoration: underline; }
 
-/* ---------------- OTP modal ---------------- */
-.otp-back {
-  position: fixed; inset: 0; z-index: 100;
-  display: grid; place-items: center; padding: 20px;
-  background: rgba(5, 5, 7, 0.72); backdrop-filter: blur(6px);
-}
-.otp-card {
-  width: 100%; max-width: 420px; text-align: center;
-  background: var(--bg-card); border: 1px solid var(--line);
-  border-radius: 18px; padding: 34px 30px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
-}
-.otp-icon {
-  width: 54px; height: 54px; margin: 0 auto 16px; border-radius: 14px;
-  display: grid; place-items: center;
-  background: rgba(207, 198, 176, 0.1); border: 1px solid rgba(207, 198, 176, 0.25);
-  color: var(--champagne);
-}
-.otp-icon svg { width: 26px; height: 26px; }
-.otp-title { font-family: var(--serif); font-size: 30px; font-weight: 500; color: #fbfaf7; }
-.otp-sub { margin-top: 10px; font-size: 13.5px; color: var(--grey); line-height: 1.5; }
-.otp-sub strong { color: #fff; }
-
-.otp-demo {
-  margin: 18px 0 6px; padding: 10px 12px; border-radius: 10px;
-  background: rgba(230, 207, 149, 0.08); border: 1px dashed rgba(230, 207, 149, 0.4);
-  font-size: 12.5px; color: var(--warn);
-}
-.otp-demo b { letter-spacing: 0.32em; font-size: 16px; color: #fff; }
-
-.otp-inputs { display: flex; gap: 10px; justify-content: center; margin: 22px 0 6px; }
-.otp-inputs input {
-  width: 46px; height: 56px; text-align: center;
-  font-size: 22px; font-weight: 600; color: #fff;
-  background: var(--bg-input); border: 1px solid var(--line); border-radius: 11px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.otp-inputs input:focus {
-  outline: none; border-color: rgba(207, 198, 176, 0.65);
-  box-shadow: 0 0 0 3px rgba(207, 198, 176, 0.1);
-}
-.otp-resend { margin-top: 16px; font-size: 13px; color: var(--grey); }
-.otp-resend button { background: none; border: 0; color: var(--champagne); font-weight: 600; }
-.otp-resend button:hover { text-decoration: underline; }
-.otp-resend button:disabled { color: var(--grey-dim); text-decoration: none; cursor: default; }
-.otp-actions { margin-top: 22px; display: flex; gap: 12px; }
-.otp-actions .btn-primary { flex: 1; }
-.btn-ghost {
-  height: 56px; padding: 0 20px; border-radius: 12px;
-  background: transparent; color: #ededf0; border: 1px solid var(--line);
-  font-size: 13px; font-weight: 500; letter-spacing: 0.06em;
-  transition: background 0.2s, border-color 0.2s;
-}
-.btn-ghost:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.22); }
-
 /* ---------------- success / pending state ---------------- */
 .state-card { text-align: center; max-width: 540px; margin: 0 auto; }
 .state-badge {
@@ -415,5 +360,4 @@ img { display: block; max-width: 100%; }
   .phone-grp { display: grid; grid-template-columns: 110px 1fr; gap: 10px; }
   .doc-row { grid-template-columns: 1fr; }
   .btn-add-doc { width: 100%; justify-content: center; }
-  .otp-inputs input { width: 40px; height: 50px; font-size: 19px; }
 }

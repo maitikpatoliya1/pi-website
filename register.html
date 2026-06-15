@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/register.css?v=20260618" />
+  <link rel="stylesheet" href="assets/css/register.css?v=20260615-no-otp" />
   <link rel="icon" type="image/png" href="assets/img/logo.png" />
 </head>
 <body>
@@ -21,8 +21,6 @@
     <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
     <symbol id="i-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 6.2A9.7 9.7 0 0 1 12 5.5c6.4 0 10 6.5 10 6.5a17 17 0 0 1-3.3 4M6.4 8A17 17 0 0 0 2 12s3.6 6.5 10 6.5a9.4 9.4 0 0 0 3.6-.7"/><path d="M9.5 9.7a3 3 0 0 0 4.2 4.2"/></symbol>
     <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9.5 16.5H2.5L12 3z"/><path d="M12 10v4M12 17.5h.01"/></symbol>
-    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.6-3.2 7.8-8 9-4.8-1.2-8-4.4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round"/></symbol>
-    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5 11-11"/></symbol>
     <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></symbol>
     <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
@@ -241,7 +239,7 @@
         <div class="state-badge wait"><svg><use href="#i-clock"/></svg></div>
         <h2 class="state-title">Application submitted</h2>
         <p class="state-text">
-          Thank you, <strong id="doneName">there</strong>. Your email has been verified and your
+          Thank you, <strong id="doneName">there</strong>. Your account has been created and your
           application is now <strong>awaiting admin approval</strong>. You'll be able to view the
           live diamond inventory as soon as your account is approved.
         </p>
@@ -253,35 +251,9 @@
     </div>
   </main>
 
-  <!-- ===== OTP modal ===== -->
-  <div class="otp-back" id="otpModal" hidden>
-    <div class="otp-card">
-      <div class="otp-icon"><svg><use href="#i-shield"/></svg></div>
-      <h2 class="otp-title">Verify your email</h2>
-      <p class="otp-sub">We sent a 6-digit code to <strong id="otpEmail">your email</strong>. Enter it below to continue.</p>
-
-      <div class="otp-inputs" id="otpInputs">
-        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 1" />
-        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2" />
-        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3" />
-        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4" />
-        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5" />
-        <input type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6" />
-      </div>
-      <p class="form-msg" id="otpMsg" role="status" aria-live="polite"></p>
-
-      <div class="otp-resend">Didn't get it? <button type="button" id="otpResend">Resend code</button></div>
-
-      <div class="otp-actions">
-        <button type="button" class="btn-ghost" id="otpCancel">Cancel</button>
-        <button type="button" class="btn-primary" id="otpVerify">Verify <svg><use href="#i-check"/></svg></button>
-      </div>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/js/supabase-config.js?v=20260615-login-otp"></script>
-  <script src="assets/js/auth.js?v=20260615-login-otp"></script>
-  <script src="assets/js/register.js?v=20260615-login-otp"></script>
+  <script src="assets/js/supabase-config.js?v=20260615-no-otp"></script>
+  <script src="assets/js/auth.js?v=20260615-no-otp"></script>
+  <script src="assets/js/register.js?v=20260615-no-otp"></script>
 </body>
 </html>

@@ -15,6 +15,8 @@
     console.error("supabase-js failed to load before supabase-config.js");
     return;
   }
+  global.PI_SUPABASE_URL = URL;
+  global.PI_SUPABASE_ANON_KEY = ANON;
   global.PI_SB = global.supabase.createClient(URL, ANON, {
     auth: { persistSession: true, autoRefreshToken: true }
   });

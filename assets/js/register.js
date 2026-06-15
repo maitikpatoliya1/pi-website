@@ -1,7 +1,7 @@
 /* ============================================================
    Pansuriya Impex — registration page (DEMO)
-   Full profile form -> email OTP (simulated) -> create account
-   as "pending" (awaiting admin approval). Backed by PIAuth.
+   Full profile form -> create account as "pending" (awaiting
+   admin approval). Backed by PIAuth.
    ============================================================ */
 (function () {
   "use strict";
@@ -233,7 +233,7 @@
     };
   }
 
-  /* ---------- submit -> validate -> OTP ---------- */
+  /* ---------- submit -> validate -> create account ---------- */
   var pendingProfile = null;
   var form = $("regForm");
 
@@ -262,85 +262,23 @@
     var sbtn = $("submitBtn"); sbtn.disabled = true;
     flash(msg, "Creating your account…", false);
     PIAuth.register(pendingProfile)
-      .then(function () { sbtn.disabled = false; openOtp(pendingProfile.email); })
-      .catch(function (err) {
-        sbtn.disabled = false;
-        if (/username/i.test(err.message)) mark("username");
-        if (/email/i.test(err.message)) mark("email");
-        flash(msg, err.message || "Could not start registration.", true);
-      });
-  });
-
-  /* ---------- email OTP ---------- */
-  var otpModal = $("otpModal"), otpInputs = Array.prototype.slice.call($("otpInputs").querySelectorAll("input"));
-  var otpMsg = $("otpMsg");
-
-  function openOtp(email) {
-    $("otpEmail").textContent = email;
-    otpInputs.forEach(function (i) { i.value = ""; });
-    otpMsg.classList.remove("show");
-    otpModal.hidden = false;
-    document.body.style.overflow = "hidden";
-    setTimeout(function () { otpInputs[0].focus(); }, 30);
-  }
-  function closeOtp() { otpModal.hidden = true; document.body.style.overflow = ""; }
-
-  otpInputs.forEach(function (inp, idx) {
-    inp.addEventListener("input", function () {
-      inp.value = inp.value.replace(/\D/g, "").slice(0, 1);
-      if (inp.value && idx < otpInputs.length - 1) otpInputs[idx + 1].focus();
-    });
-    inp.addEventListener("keydown", function (e) {
-      if (e.key === "Backspace" && !inp.value && idx > 0) otpInputs[idx - 1].focus();
-    });
-    inp.addEventListener("paste", function (e) {
-      e.preventDefault();
-      var digits = (e.clipboardData.getData("text") || "").replace(/\D/g, "").slice(0, 6).split("");
-      digits.forEach(function (d, i) { if (otpInputs[i]) otpInputs[i].value = d; });
-      otpInputs[Math.min(digits.length, otpInputs.length - 1)].focus();
-    });
-  });
-
-  $("otpResend").addEventListener("click", function () {
-    var btn = $("otpResend");
-    btn.disabled = true;
-    otpInputs.forEach(function (i) { i.value = ""; });
-    flash(otpMsg, "Sending a new code…", false);
-    PIAuth.resendSignupOtp(pendingProfile.email)
       .then(function () {
-        flash(otpMsg, "A new code has been sent.", false);
-        otpInputs[0].focus();
-      })
-      .catch(function (err) {
-        flash(otpMsg, err.message || "Could not resend the code. Please try again.", true);
-      })
-      .then(function () { btn.disabled = false; });
-  });
-  $("otpCancel").addEventListener("click", closeOtp);
-
-  $("otpVerify").addEventListener("click", function () {
-    var entered = otpInputs.map(function (i) { return i.value; }).join("");
-    if (entered.length < 6) { flash(otpMsg, "Enter all 6 digits.", true); return; }
-
-    // account was already created on submit (Supabase signUp); finish up:
-    var btn = $("otpVerify"); btn.disabled = true;
-    flash(otpMsg, "Verifying…", false);
-    PIAuth.verifyEmailOtp(pendingProfile.email, entered)
-      .then(function () {
-        flash(otpMsg, "Finishing…", false);
+        flash(msg, "Saving your documents…", false);
         return PIAuth.uploadDocuments(pendingProfile.documents);
       })
-      .then(function () { return PIAuth.logout(); })   // sign back in once an admin approves
+      .then(function () { return PIAuth.logout(); })
       .then(function () {
-        closeOtp();
+        sbtn.disabled = false;
         $("doneName").textContent = pendingProfile.firstName || pendingProfile.username;
         $("formView").hidden = true;
         $("doneView").hidden = false;
         window.scrollTo(0, 0);
       })
       .catch(function (err) {
-        btn.disabled = false;
-        flash(otpMsg, err.message || "Could not finish. Please try again.", true);
+        sbtn.disabled = false;
+        if (/username/i.test(err.message)) mark("username");
+        if (/email/i.test(err.message)) mark("email");
+        flash(msg, err.message || "Could not create the account right now.", true);
       });
   });
 })();
