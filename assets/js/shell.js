@@ -168,6 +168,7 @@
   }
   function renderSalesStatCard(card) {
     return '<article class="sales-stat-card ' + esc(card.tone || "neutral") + '">' +
+      (card.icon ? '<span class="sales-stat-icon"><svg class="ic"><use href="#' + card.icon + '"/></svg></span>' : '') +
       '<span class="sales-stat-label">' + esc(card.label) + '</span>' +
       '<span class="sales-stat-sub">' + esc(card.sub) + '</span>' +
       '<strong class="sales-stat-value">' + esc(card.value) + '</strong>' +
@@ -184,20 +185,20 @@
     });
 
     var salesDocs = [
-      { label: "Proforma", sub: "Generated today", value: n0(storeNumber(["salesDocuments.proforma", "documents.proforma", "proforma"])), tone: "good" },
-      { label: "Invoice Stones", sub: "Invoiced today", value: n0(storeNumber(["salesDocuments.invoiceStones", "documents.invoiceStones", "invoiceStones"])), tone: "good" },
-      { label: "Cancel Sell", sub: "Cancelled sales today", value: n0(storeNumber(["salesDocuments.cancelSell", "documents.cancelSell", "cancelSell"])), tone: "neutral" }
+      { label: "Proforma", sub: "Generated today", value: n0(storeNumber(["salesDocuments.proforma", "documents.proforma", "proforma"])), tone: "good", icon: "ic-doc" },
+      { label: "Invoice Stones", sub: "Invoiced today", value: n0(storeNumber(["salesDocuments.invoiceStones", "documents.invoiceStones", "invoiceStones"])), tone: "good", icon: "ic-receipt" },
+      { label: "Cancel Sell", sub: "Cancelled sales today", value: n0(storeNumber(["salesDocuments.cancelSell", "documents.cancelSell", "cancelSell"])), tone: "neutral", icon: "ic-xcircle" }
     ];
     var mixSales = [
-      { label: "Mix Proforma", sub: "Amount for today's proforma", value: money(storeNumber(["mixSaleAmounts.proforma", "amounts.mixProforma", "mixProforma"])), tone: "warm" },
-      { label: "Mix Invoice", sub: "Amount for today's invoice", value: money(storeNumber(["mixSaleAmounts.invoice", "amounts.mixInvoice", "mixInvoice"])), tone: "warm" },
-      { label: "Mix Cancel Sell", sub: "Cancelled mix sales amount", value: money(storeNumber(["mixSaleAmounts.cancelSell", "amounts.mixCancelSell", "mixCancelSell"])), tone: "neutral" }
+      { label: "Mix Proforma", sub: "Amount for today's proforma", value: money(storeNumber(["mixSaleAmounts.proforma", "amounts.mixProforma", "mixProforma"])), tone: "warm", icon: "ic-doc" },
+      { label: "Mix Invoice", sub: "Amount for today's invoice", value: money(storeNumber(["mixSaleAmounts.invoice", "amounts.mixInvoice", "mixInvoice"])), tone: "warm", icon: "ic-receipt" },
+      { label: "Mix Cancel Sell", sub: "Cancelled mix sales amount", value: money(storeNumber(["mixSaleAmounts.cancelSell", "amounts.mixCancelSell", "mixCancelSell"])), tone: "neutral", icon: "ic-xcircle" }
     ];
     var ops = [
-      { label: "Memo Stones", sub: "Current memo activity", value: n0(statusCounts.memo), tone: "blue" },
-      { label: "Memo Out Stones", sub: "Stones currently sent out", value: n0(statusCounts.memo_out), tone: "blue" },
-      { label: "Hold Stones", sub: "Reserved and blocked inventory", value: n0(statusCounts.hold), tone: "orange" },
-      { label: "Offer Stones", sub: "Active offers in pipeline", value: n0(statusCounts.offer), tone: "olive" }
+      { label: "Memo Stones", sub: "Current memo activity", value: n0(statusCounts.memo), tone: "blue", icon: "ic-clipboard" },
+      { label: "Memo Out Stones", sub: "Stones currently sent out", value: n0(statusCounts.memo_out), tone: "blue", icon: "ic-arrowout" },
+      { label: "Hold Stones", sub: "Reserved and blocked inventory", value: n0(statusCounts.hold), tone: "orange", icon: "ic-lock" },
+      { label: "Offer Stones", sub: "Active offers in pipeline", value: n0(statusCounts.offer), tone: "olive", icon: "ic-tag" }
     ];
 
     $("dashRoot").innerHTML =
