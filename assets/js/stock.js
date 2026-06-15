@@ -507,8 +507,17 @@
     return (
       '<div class="stock-detail-media detail-media-viewer" data-detail-media>' +
         '<div class="detail-media-stage">' +
-          '<div class="detail-media-panel active" data-media-panel="video">' +
-            '<video class="detail-video" src="' + video + '" poster="' + img + '" autoplay muted loop playsinline controls preload="metadata" onerror="this.closest(\'.detail-media-panel\').classList.add(\'media-error\')"></video>' +
+          '<div class="detail-media-panel active" data-media-panel="drag">' +
+            '<iframe class="detail-drag-frame" src="' + vision + '" title="360° view for ' + esc(titleLine(d)) + '" loading="eager" allowfullscreen referrerpolicy="no-referrer-when-downgrade" onerror="this.closest(\'.detail-media-panel\').classList.add(\'media-error\')"></iframe>' +
+            '<a class="media-open media-open-icon" href="' + vision + '" target="_blank" rel="noopener" aria-label="Open 360° viewer in a new tab" title="Open 360° viewer">' + svg("ic-arrowout") + "</a>" +
+            '<div class="media-fallback">' +
+              svg("ic-rotate") +
+              '<strong>360° preview unavailable</strong>' +
+              '<a href="' + vision + '" target="_blank" rel="noopener">Open 360° viewer</a>' +
+            "</div>" +
+          "</div>" +
+          '<div class="detail-media-panel" data-media-panel="video" hidden>' +
+            '<video class="detail-video" src="' + video + '" poster="' + img + '" muted loop playsinline controls preload="metadata" onerror="this.closest(\'.detail-media-panel\').classList.add(\'media-error\')"></video>' +
             '<div class="media-fallback">' +
               svg("ic-video") +
               '<strong>Video preview unavailable</strong>' +
@@ -535,7 +544,8 @@
           "</div>" +
         "</div>" +
         '<div class="detail-media-tabs" role="group" aria-label="Stone media">' +
-          '<button type="button" class="detail-media-tab active" data-media-tab="video" aria-pressed="true">' + svg("ic-video") + " Video</button>" +
+          '<button type="button" class="detail-media-tab active" data-media-tab="drag" aria-pressed="true">' + svg("ic-rotate") + " 360°</button>" +
+          '<button type="button" class="detail-media-tab" data-media-tab="video" aria-pressed="false">' + svg("ic-video") + " Video</button>" +
           '<button type="button" class="detail-media-tab" data-media-tab="certificate" aria-pressed="false"' + (cert ? "" : " disabled") + ">" + svg("ic-cert") + " Certificate</button>" +
           '<button type="button" class="detail-media-tab" data-media-tab="image" aria-pressed="false">' + svg("ic-image") + " Image</button>" +
         "</div>" +
@@ -603,8 +613,6 @@
     if (!d) return;
     detailReturnScroll = state.view === "grid" ? gridView.scrollTop : tableScroll.scrollTop;
     detailView.innerHTML = detailPageHTML(d);
-    var video = detailView.querySelector(".detail-video");
-    if (video && video.play) video.play().catch(function () {});
     tabsNav.hidden = true;
     invCard.hidden = true;
     detailView.hidden = false;

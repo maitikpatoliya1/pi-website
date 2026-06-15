@@ -957,6 +957,7 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
   width: 140px;
   height: 140px;
 }
+.detail-drag-frame,
 .detail-video,
 .detail-image {
   position: absolute;
@@ -966,6 +967,10 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
   object-fit: contain;
   object-position: center;
   z-index: 1;
+}
+.detail-drag-frame {
+  border: 0;
+  background: #111318;
 }
 .detail-video { background: #111318; }
 .media-open {
@@ -986,6 +991,11 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
   backdrop-filter: blur(8px);
 }
 .media-open .ic { width: 15px; height: 15px; }
+.media-open-icon {
+  width: 38px;
+  padding: 0;
+  justify-content: center;
+}
 .media-open:hover { background: var(--ink); }
 .media-fallback {
   display: none;
@@ -1015,6 +1025,7 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
 .detail-media-panel.media-error .media-fallback { display: flex; }
 .detail-media-panel.media-error .detail-video,
 .detail-media-panel.media-error .detail-image,
+.detail-media-panel.media-error .detail-drag-frame,
 .detail-media-panel.media-error .media-open { display: none; }
 .certificate-preview {
   width: min(78%, 360px);
@@ -1077,7 +1088,7 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
 }
 .detail-media-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 .detail-media-tab {
@@ -1093,6 +1104,7 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
   color: var(--ink-soft);
   font-size: 13px;
   font-weight: 750;
+  white-space: nowrap;
   transition: color .18s, background .18s, border-color .18s;
 }
 .detail-media-tab .ic { width: 16px; height: 16px; }
@@ -1280,6 +1292,7 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
   .inv-card { padding: 16px; border-radius: 12px; }
   .detail-backbar { padding: 16px; }
   .stock-detail-card { padding: 16px; }
+  .detail-media-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stock-spec-grid { grid-template-columns: 1fr; }
   .grid-view { grid-template-columns: minmax(0, 1fr); }
   .gcard-title { font-size: 20px; }
