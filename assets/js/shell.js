@@ -39,6 +39,9 @@
 
     /* nav from permissions */
     var pages = PIPerms.allowedPages(role);
+    if (role === "customer") {
+      pages = pages.filter(function (p) { return p.id !== "dashboard"; });
+    }
     var ids = pages.map(function (p) { return p.id; });
     var nav = $("smNav");
     nav.innerHTML = pages.map(function (p) {
@@ -48,7 +51,10 @@
     /* view switching */
     var VIEWS = ["dashboard", "inventory", "users"];
     var dashDone = false;
-    function allowed(id) { return role === "admin" || PIPerms.canAccess(role, id); }
+    function allowed(id) {
+      if (role === "customer" && id === "dashboard") return false;
+      return role === "admin" || PIPerms.canAccess(role, id);
+    }
     function resolve(id) { return (id && allowed(id)) ? id : (ids[0] || "inventory"); }
     function showView(req) {
       var id = resolve(req);
@@ -79,13 +85,101 @@
       PIAuth.logout().then(function () { location.replace("login.html"); });
     });
 
-    /* land on Stock; Dashboard + User Management are in the menu */
-    showView(ids.indexOf("inventory") > -1 ? "inventory" : ids[0]);
+    /* Salespeople land on their dashboard; customers stay on Stock. */
+    showView(role === "salesperson" && allowed("dashboard") ? "dashboard" : (ids.indexOf("inventory") > -1 ? "inventory" : ids[0]));
   }
 
   /* ---------- dashboard ---------- */
   function n0(x) { return (x || 0).toLocaleString("en-US", { maximumFractionDigits: 0 }); }
+  function money(x) {
+    return "$" + (+x || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function normalizeStatus(s) {
+    return String(s || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  }
+  function allStones() {
+    var nat = Array.isArray(window.PI_STOCK) ? window.PI_STOCK : [];
+    var fan = Array.isArray(window.PI_FANCY_STOCK) ? window.PI_FANCY_STOCK : [];
+    return nat.concat(fan);
+  }
+  function dashboardStore() {
+    if (window.PI_DASHBOARD_STORE && typeof window.PI_DASHBOARD_STORE === "object") return window.PI_DASHBOARD_STORE;
+    try {
+      return JSON.parse(localStorage.getItem("piDashboardStore") || localStorage.getItem("pi-dashboard-store") || "{}");
+    } catch (e) {
+      return {};
+    }
+  }
+  function readPath(obj, path) {
+    return path.split(".").reduce(function (acc, key) {
+      return acc && Object.prototype.hasOwnProperty.call(acc, key) ? acc[key] : undefined;
+    }, obj);
+  }
+  function storeNumber(paths) {
+    var store = dashboardStore();
+    for (var i = 0; i < paths.length; i++) {
+      var val = readPath(store, paths[i]);
+      if (val !== undefined && val !== null && val !== "") return +val || 0;
+    }
+    return 0;
+  }
+  function renderSalesStatCard(card) {
+    return '<article class="sales-stat-card ' + esc(card.tone || "neutral") + '">' +
+      '<span class="sales-stat-label">' + esc(card.label) + '</span>' +
+      '<span class="sales-stat-sub">' + esc(card.sub) + '</span>' +
+      '<strong class="sales-stat-value">' + esc(card.value) + '</strong>' +
+    '</article>';
+  }
+  function renderSalespersonDashboard() {
+    var statusCounts = { memo: 0, memo_out: 0, hold: 0, offer: 0 };
+    allStones().forEach(function (d) {
+      var st = normalizeStatus(d.status);
+      if (st === "memo") statusCounts.memo++;
+      if (st === "memo_out" || st === "memoout") statusCounts.memo_out++;
+      if (st === "hold") statusCounts.hold++;
+      if (st === "offer") statusCounts.offer++;
+    });
+
+    var salesDocs = [
+      { label: "Proforma", sub: "Generated today", value: n0(storeNumber(["salesDocuments.proforma", "documents.proforma", "proforma"])), tone: "good" },
+      { label: "Invoice Stones", sub: "Invoiced today", value: n0(storeNumber(["salesDocuments.invoiceStones", "documents.invoiceStones", "invoiceStones"])), tone: "good" },
+      { label: "Cancel Sell", sub: "Cancelled sales today", value: n0(storeNumber(["salesDocuments.cancelSell", "documents.cancelSell", "cancelSell"])), tone: "neutral" }
+    ];
+    var mixSales = [
+      { label: "Mix Proforma", sub: "Amount for today's proforma", value: money(storeNumber(["mixSaleAmounts.proforma", "amounts.mixProforma", "mixProforma"])), tone: "warm" },
+      { label: "Mix Invoice", sub: "Amount for today's invoice", value: money(storeNumber(["mixSaleAmounts.invoice", "amounts.mixInvoice", "mixInvoice"])), tone: "warm" },
+      { label: "Mix Cancel Sell", sub: "Cancelled mix sales amount", value: money(storeNumber(["mixSaleAmounts.cancelSell", "amounts.mixCancelSell", "mixCancelSell"])), tone: "neutral" }
+    ];
+    var ops = [
+      { label: "Memo Stones", sub: "Current memo activity", value: n0(statusCounts.memo), tone: "blue" },
+      { label: "Memo Out Stones", sub: "Stones currently sent out", value: n0(statusCounts.memo_out), tone: "blue" },
+      { label: "Hold Stones", sub: "Reserved and blocked inventory", value: n0(statusCounts.hold), tone: "orange" },
+      { label: "Offer Stones", sub: "Active offers in pipeline", value: n0(statusCounts.offer), tone: "olive" }
+    ];
+
+    $("dashRoot").innerHTML =
+      '<div class="sales-dashboard" aria-label="Salesperson dashboard">' +
+        '<div class="sales-stack">' +
+          '<section class="sales-panel sales-docs-panel">' +
+            '<h1 class="sales-panel-title">Sales Documents</h1>' +
+            '<p class="sales-panel-sub">Daily document counts from the dashboard store.</p>' +
+            '<div class="sales-card-grid">' + salesDocs.map(renderSalesStatCard).join("") + '</div>' +
+          '</section>' +
+          '<section class="sales-panel sales-mix-panel">' +
+            '<h2 class="sales-panel-title">Mix Sale Amounts</h2>' +
+            '<p class="sales-panel-sub">Amounts surfaced as cards since this data is stronger than a chart.</p>' +
+            '<div class="sales-card-grid">' + mixSales.map(renderSalesStatCard).join("") + '</div>' +
+          '</section>' +
+        '</div>' +
+        '<section class="sales-panel sales-ops-panel">' +
+          '<h2 class="sales-panel-title">Operations Snapshot</h2>' +
+          '<p class="sales-panel-sub">Quick access to the main count-based dashboard stats.</p>' +
+          '<div class="sales-card-grid sales-card-grid-ops">' + ops.map(renderSalesStatCard).join("") + '</div>' +
+        '</section>' +
+      '</div>';
+  }
   function renderDashboard() {
+    if (role === "salesperson") { renderSalespersonDashboard(); return; }
     var nat = Array.isArray(window.PI_STOCK) ? window.PI_STOCK : [];
     var fan = Array.isArray(window.PI_FANCY_STOCK) ? window.PI_FANCY_STOCK : [];
     var all = nat.concat(fan);

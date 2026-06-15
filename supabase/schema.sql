@@ -57,7 +57,7 @@ create table if not exists public.role_permissions (
 insert into public.role_permissions (role, pages) values
   ('admin',         array['dashboard','inventory','users']),
   ('stock_manager', array['dashboard','inventory']),
-  ('salesperson',   array['inventory']),
+  ('salesperson',   array['dashboard','inventory']),
   ('customer',      array['inventory'])
 on conflict (role) do nothing;
 

@@ -19,13 +19,14 @@
   var DEFAULTS = {
     admin:         ["dashboard", "inventory", "users"],
     stock_manager: ["dashboard", "inventory"],
-    salesperson:   ["inventory"],
+    salesperson:   ["dashboard", "inventory"],
     customer:      ["inventory"]
   };
 
   function withDefaults(m) {
     Object.keys(DEFAULTS).forEach(function (role) { if (!m[role]) m[role] = DEFAULTS[role].slice(); });
     m.admin = PAGES.map(function (p) { return p.id; }); // admin always full access
+    m.customer = (m.customer || []).filter(function (id) { return id !== "dashboard"; });
     return m;
   }
   var cache = null;
@@ -34,7 +35,11 @@
     PAGES: PAGES,
     ADMIN_ONLY: ADMIN_ONLY,
     pageById: function (id) { for (var i = 0; i < PAGES.length; i++) if (PAGES[i].id === id) return PAGES[i]; return null; },
-    isEditable: function (role, pageId) { if (role === "admin") return false; return ADMIN_ONLY.indexOf(pageId) === -1; },
+    isEditable: function (role, pageId) {
+      if (role === "admin") return false;
+      if (role === "customer" && pageId === "dashboard") return false;
+      return ADMIN_ONLY.indexOf(pageId) === -1;
+    },
 
     // fetch the matrix from the DB and cache it
     load: function () {
@@ -57,6 +62,7 @@
     setRolePages: function (role, pageIds) {
       if (role === "admin") return Promise.resolve(false);
       var clean = pageIds.filter(function (id) { return ADMIN_ONLY.indexOf(id) === -1; });
+      if (role === "customer") clean = clean.filter(function (id) { return id !== "dashboard"; });
       if (cache) cache[role] = clean;
       return sb().from("role_permissions").update({ pages: clean }).eq("role", role)
         .then(function (r) { return !r.error; });
