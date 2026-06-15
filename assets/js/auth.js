@@ -57,6 +57,29 @@
 
   var cachedProfile = null;
 
+  function emailForIdentifier(identifier) {
+    identifier = String(identifier || "").trim();
+    if (identifier.indexOf("@") > -1) return Promise.resolve(identifier);
+    return sb().rpc("email_for_username", { uname: identifier }).then(function (r) {
+      if (r.error || !r.data) throw new Error("Incorrect username/email or password.");
+      return r.data;
+    });
+  }
+
+  function compactProfile(p, email) {
+    return {
+      email: email || (p ? p.email : null),
+      username: p ? p.username : null,
+      status: p ? p.status : "pending",
+      role: p ? p.role : "customer"
+    };
+  }
+
+  function clearPasswordOnlySession() {
+    cachedProfile = null;
+    return sb().auth.signOut({ scope: "local" }).catch(function () {});
+  }
+
   var PIAuth = {
     ROLES: ROLES,
     ROLE_LABELS: ROLE_LABELS,
@@ -75,9 +98,9 @@
         return { email: String(profile.email || "").trim(), needsConfirmation: !res.data.session };
       });
     },
-    // Verify the 6-digit signup OTP -> confirms email + starts a session.
+    // Verify the 6-digit emailed signup OTP -> confirms email + starts a session.
     verifyEmailOtp: function (email, token) {
-      return sb().auth.verifyOtp({ email: email, token: String(token).trim(), type: "signup" })
+      return sb().auth.verifyOtp({ email: email, token: String(token).trim(), type: "email" })
         .then(function (res) { if (res.error) throw new Error(friendly(res.error)); return res.data; });
     },
     resendSignupOtp: function (email) {
@@ -112,14 +135,7 @@
     /* ---------- login ---------- */
     // identifier may be a username OR an email
     login: function (identifier, password) {
-      identifier = String(identifier || "").trim();
-      var emailP = identifier.indexOf("@") > -1
-        ? Promise.resolve(identifier)
-        : sb().rpc("email_for_username", { uname: identifier }).then(function (r) {
-            if (r.error || !r.data) throw new Error("Incorrect username/email or password.");
-            return r.data;
-          });
-      return emailP.then(function (email) {
+      return emailForIdentifier(identifier).then(function (email) {
         return sb().auth.signInWithPassword({ email: email, password: password });
       }).then(function (res) {
         if (res.error) throw new Error(friendly(res.error));
@@ -127,6 +143,66 @@
       }).then(function (p) {
         cachedProfile = p;
         return { username: p ? p.username : null, status: p ? p.status : "pending", role: p ? p.role : "customer" };
+      });
+    },
+
+    // Password + email OTP login. The password is checked first, but the
+    // password session is cleared before sending the email code.
+    requestLoginOtp: function (identifier, password) {
+      var resolvedEmail = "";
+      return emailForIdentifier(identifier).then(function (email) {
+        resolvedEmail = email;
+        return sb().auth.signInWithPassword({ email: email, password: password });
+      }).then(function (res) {
+        if (res.error) throw new Error(friendly(res.error));
+        return PIAuth.fetchOwnProfile();
+      }).then(function (p) {
+        var summary = compactProfile(p, resolvedEmail);
+        return clearPasswordOnlySession().then(function () {
+          if (summary.status !== "approved") return summary;
+          return sb().auth.signInWithOtp({
+            email: resolvedEmail,
+            options: {
+              shouldCreateUser: false,
+              emailRedirectTo: location.origin + "/stock.html?cat=natural"
+            }
+          }).then(function (otp) {
+            if (otp.error) throw new Error(friendly(otp.error));
+            summary.otpRequired = true;
+            return summary;
+          });
+        });
+      });
+    },
+
+    resendLoginOtp: function (email) {
+      return sb().auth.signInWithOtp({
+        email: String(email || "").trim(),
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: location.origin + "/stock.html?cat=natural"
+        }
+      }).then(function (res) {
+        if (res.error) throw new Error(friendly(res.error));
+        return true;
+      });
+    },
+
+    verifyLoginOtp: function (email, token) {
+      return sb().auth.verifyOtp({
+        email: String(email || "").trim(),
+        token: String(token || "").trim(),
+        type: "email"
+      }).then(function (res) {
+        if (res.error) throw new Error(friendly(res.error));
+        return PIAuth.fetchOwnProfile();
+      }).then(function (p) {
+        cachedProfile = p;
+        var summary = compactProfile(p, email);
+        if (summary.status !== "approved") {
+          return PIAuth.logout().then(function () { return summary; });
+        }
+        return summary;
       });
     },
 

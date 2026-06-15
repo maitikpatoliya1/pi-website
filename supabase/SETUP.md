@@ -85,35 +85,51 @@ Sign in again → you land on the app and the menu shows **User Management**.
 
 ---
 
-## §B (updated) — Custom SMTP so the 6-digit OTP can be emailed
+## §B (updated) — Custom SMTP with GoDaddy Titan
 
-Supabase only lets you edit the verification email (to insert the code) **after**
-you connect your own email service. The built-in mail is testing-only (~3-4/hour).
-Use a free provider — **Brevo** is the easiest (300 emails/day, no card).
+Supabase must send OTP emails from a server-side SMTP configuration. Do **not**
+put the Titan password in this repo or in browser JavaScript.
 
-### 1. Get SMTP credentials (Brevo)
-1. Sign up at **https://www.brevo.com** (free).
-2. Verify a **sender**:
-   - Quick start: **Senders, Domains & Dedicated IPs → Senders → Add a sender**,
-     verify an email you control (e.g. `info@pansuriyaimpex.com` or your gmail).
-   - Best deliverability (recommended for production): **Domains → Authenticate**
-     `maitik.com` and add the DKIM/SPF records it gives you to GoDaddy DNS, then
-     send from `noreply@maitik.com`.
-3. **SMTP & API → SMTP** → note: **Server** `smtp-relay.brevo.com`, **Port** `587`,
-   **Login** (shown there), and **generate an SMTP key** = your password.
+### 1. Enable Titan SMTP access
+Use your GoDaddy Professional Email powered by Titan mailbox:
+- **Sender email**: `contact@maitik.com`
+- **Username**: `contact@maitik.com`
+- **Password**: the Titan mailbox password
 
-### 2. Plug it into Supabase
+GoDaddy lists these SMTP settings for Professional Email powered by Titan:
+- **SMTP server**: `smtpout.secureserver.net`
+- **Security**: `SSL`
+- **Port**: `465`
+
+If Supabase/Titan has trouble with SSL on port 465, Titan's own script docs also
+support `smtp.titan.email` on port `587` with `STARTTLS`.
+
+### 2. Plug Titan into Supabase
+First confirm **Authentication → Providers → Email** is enabled. If this is off,
+the login page will show `Email logins are disabled`.
+
 Supabase → **Project Settings → Authentication → SMTP Settings** → **Enable Custom SMTP**:
-- **Sender email**: your verified sender (e.g. `noreply@maitik.com`)
+- **Sender email**: `contact@maitik.com`
 - **Sender name**: `Pansuriya Impex`
-- **Host**: `smtp-relay.brevo.com`  **Port**: `587`
-- **Username**: Brevo SMTP login   **Password**: Brevo SMTP key
+- **Host**: `smtpout.secureserver.net`
+- **Port**: `465`
+- **Username**: `contact@maitik.com`
+- **Password**: your Titan mailbox password
+- **Security / SSL**: enabled, if the dashboard shows this option
 - **Save.**
 
-### 3. Edit the verification email (now unlocked)
-Supabase → **Authentication → Email Templates → "Confirm signup"** → **Body** →
-paste the contents of **`supabase/email-confirm-template.html`** (it shows the
-`{{ .Token }}` 6-digit code) → **Save**.
+### 3. Make the emails show 6-digit OTP codes
+Supabase email OTP uses two different templates:
 
-That's it — registration on maitik.com will now email a real 6-digit code that
-the OTP screen accepts.
+1. **Registration OTP**
+   - Supabase → **Authentication → Email Templates → "Confirm signup"**.
+   - Paste `supabase/email-confirm-template.html` into **Body**.
+   - Save.
+
+2. **Login OTP**
+   - Supabase → **Authentication → Email Templates → "Magic Link"**.
+   - Paste `supabase/email-login-template.html` into **Body**.
+   - Save.
+
+That's it — registration and login on `maitik.com` will now send real 6-digit
+codes from `contact@maitik.com`.
