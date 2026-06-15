@@ -2149,7 +2149,7 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
 
 .sales-insight-grid {
   display: grid;
-  grid-template-columns: minmax(320px, .9fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(280px, 460px);
   gap: 20px;
 }
 .sales-inventory-card {

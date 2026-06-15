@@ -152,7 +152,13 @@
   function allStones() {
     var nat = Array.isArray(window.PI_STOCK) ? window.PI_STOCK : [];
     var fan = Array.isArray(window.PI_FANCY_STOCK) ? window.PI_FANCY_STOCK : [];
-    return nat.concat(fan);
+    // Drop corrupt rows: a cut diamond is never > ~150 ct, so anything
+    // larger (e.g. a stray 5,290 ct / $8.18M import row) is bad data and
+    // would wreck the inventory value/stats.
+    return nat.concat(fan).filter(function (d) {
+      var ct = +d.cts || 0;
+      return ct >= 0 && ct <= 150;
+    });
   }
   function dashboardStore() {
     if (window.PI_DASHBOARD_STORE && typeof window.PI_DASHBOARD_STORE === "object") return window.PI_DASHBOARD_STORE;
@@ -381,29 +387,9 @@
               '<div><svg class="ic"><use href="#ic-clock"/></svg><span>Last upload</span><strong>' + today.toLocaleDateString("en-GB") + '</strong></div>' +
             '</div>' +
           '</article>' +
-          '<article class="sales-discovery-card market">' +
-            '<span class="sales-eyebrow">Explore</span><h3>Market Insights</h3>' +
-            '<p>Highest-moving shapes, memo demand, and missing-stock signals for the desk.</p>' +
-            '<img src="assets/img/about-diamonds-generated.png" alt="" loading="lazy" decoding="async">' +
-            '<button type="button">Discover Market Insights</button>' +
-          '</article>' +
-          '<article class="sales-discovery-card price">' +
-            '<span class="sales-eyebrow">Discover</span><h3>Price analytics</h3>' +
-            '<p>Compare pricing confidence against inventory movement and customer interest.</p>' +
-            '<div class="sales-price-ring"><strong>63%</strong><span>Excellent<br>pricing</span></div>' +
-            '<button type="button">Discover Price Analytics</button>' +
-          '</article>' +
         '</section>' +
         '<section class="sales-section-head"><h2>Activity - this month</h2></section>' +
         '<section class="sales-activity-grid">' + activities.map(renderActivityCard).join("") + '</section>' +
-        '<section class="sales-cta-grid">' +
-          '<article class="sales-cta" style="--cta-img:url(\'/assets/img/login-diamonds.png\')">' +
-            '<h3>Grow your sales</h3><p>Use ready media, certificates, and cart documents to move faster with buyers.</p><button type="button">Open stock</button>' +
-          '</article>' +
-          '<article class="sales-cta" style="--cta-img:url(\'/assets/img/natural.jpeg\')">' +
-            '<h3>The right stone at the right price</h3><p>Review live inventory value, memo movement, and holds before quoting.</p><button type="button">Check pricing</button>' +
-          '</article>' +
-        '</section>' +
       '</div>';
   }
   function renderDashboard() {
