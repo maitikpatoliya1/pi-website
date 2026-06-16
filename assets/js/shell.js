@@ -92,6 +92,7 @@
       if (id === "cart" && window.PICart) window.PICart.render();
       if (id === "users" && window.PIUserMgmt) PIUserMgmt.render();
       document.title = (id === "dashboard" ? "Dashboard" : id === "users" ? "User Management" : id === "cart" ? "Cart" : "Diamond Inventory") + " — Pansuriya Impex";
+      try { sessionStorage.setItem("pi_view", id); } catch (e) {}   // remember it for reloads
     }
 
     /* drawer open/close */
@@ -108,6 +109,7 @@
       close();
     });
     $("sideSignOut").addEventListener("click", function () {
+      try { sessionStorage.removeItem("pi_view"); } catch (e) {}   // fresh login starts at the default view
       PIAuth.logout().then(function () { location.replace("login.html"); });
     });
     if ($("cartBtn")) {
@@ -134,10 +136,13 @@
       }
     }
 
-    /* initial render */
+    /* initial render — on reload, return to the view you were on (per tab);
+       a fresh sign-in (no saved view) lands on the role's default. */
     renderNav();
     updateRoleLabel();
-    showView(defaultViewFor(viewRole));
+    var savedView = null;
+    try { savedView = sessionStorage.getItem("pi_view"); } catch (e) {}
+    showView(savedView && allowed(savedView) ? savedView : defaultViewFor(viewRole));
     window.PIShell = { showView: showView };
   }
 
