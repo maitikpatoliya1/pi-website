@@ -37,7 +37,7 @@
   function boot() {
     var nav = $("smNav");
     var menu = $("sideMenu"), backdrop = $("drawerBackdrop");
-    var VIEWS = ["dashboard", "inventory", "cart", "users"];
+    var VIEWS = ["dashboard", "inventory", "cart", "orders", "users"];
     var dashRenderedFor = null;   // which role the dashboard was last rendered for
     var currentIds = [];
 
@@ -90,8 +90,9 @@
       });
       if (id === "dashboard" && dashRenderedFor !== viewRole) { renderDashboard(); dashRenderedFor = viewRole; }
       if (id === "cart" && window.PICart) window.PICart.render();
+      if (id === "orders" && window.PIOrders) window.PIOrders.render();
       if (id === "users" && window.PIUserMgmt) PIUserMgmt.render();
-      document.title = (id === "dashboard" ? "Dashboard" : id === "users" ? "User Management" : id === "cart" ? "Cart" : "Diamond Inventory") + " — Pansuriya Impex";
+      document.title = (id === "dashboard" ? "Dashboard" : id === "users" ? "User Management" : id === "cart" ? "Cart" : id === "orders" ? "Pending confirmation" : "Diamond Inventory") + " — Pansuriya Impex";
       try { sessionStorage.setItem("pi_view", id); } catch (e) {}   // remember it for reloads
     }
 
@@ -117,6 +118,12 @@
         if (allowed("cart")) showView("cart");
       });
     }
+    // dashboard action cards can jump to another view via data-goto
+    var dashRootEl = $("dashRoot");
+    if (dashRootEl) dashRootEl.addEventListener("click", function (e) {
+      var g = e.target.closest("[data-goto]");
+      if (g) showView(g.getAttribute("data-goto"));
+    });
 
     /* admin-only: "view as role" dropdown to preview each role's experience */
     if (role === "admin") {
@@ -265,10 +272,10 @@
     return '<article class="sales-action-card ' + esc(card.tone || "") + '">' +
       '<div class="sales-action-top">' +
         '<span class="sales-action-icon"><svg class="ic"><use href="#' + esc(card.icon) + '"/></svg></span>' +
-        '<button type="button" class="sales-action-btn">' + esc(card.action) + '</button>' +
+        '<button type="button" class="sales-action-btn"' + (card.goto ? ' data-goto="' + esc(card.goto) + '"' : "") + '>' + esc(card.action) + '</button>' +
       '</div>' +
       '<h2>' + esc(card.label) + '</h2>' +
-      '<strong>' + esc(card.value) + '</strong>' +
+      '<strong' + (card.countId ? ' id="' + esc(card.countId) + '"' : "") + '>' + esc(card.value) + '</strong>' +
     '</article>';
   }
   function renderActivityCard(card) {
@@ -323,7 +330,7 @@
     var welcomeLine = firstName.length > 22 ? "Welcome back" : "Welcome back, " + firstName;
 
     var actions = [
-      { label: "Pending confirmation", value: n0(docProforma), action: "Review", icon: "ic-clipboard", tone: "champagne" },
+      { label: "Pending confirmation", value: n0(docProforma), action: "Review", icon: "ic-clipboard", tone: "champagne", goto: "orders", countId: "pendingConfCount" },
       { label: "Pending invoices", value: n0(docInvoice), action: "Upload", icon: "ic-receipt", tone: "muted" },
       { label: "Pending holds", value: n0(statusCounts.hold), action: "Resolve", icon: "ic-lock", tone: "muted" },
       { label: "Pending delivery", value: n0(statusCounts.memo_out), action: "Manage", icon: "ic-arrowout", tone: "gold" },
@@ -398,6 +405,13 @@
         '<section class="sales-section-head"><h2>Activity - this month</h2></section>' +
         '<section class="sales-activity-grid">' + activities.map(renderActivityCard).join("") + '</section>' +
       '</div>';
+
+    // live count of proformas awaiting confirmation
+    if (window.PI_SB) {
+      window.PI_SB.from("orders").select("id", { count: "exact", head: true }).eq("status", "pending_confirmation")
+        .then(function (r) { var el = $("pendingConfCount"); if (el && typeof r.count === "number") el.textContent = n0(r.count); })
+        .catch(function () {});
+    }
   }
   function renderDashboard() {
     if (viewRole === "salesperson") { renderSalespersonDashboard(); return; }

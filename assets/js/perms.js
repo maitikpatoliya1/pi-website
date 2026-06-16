@@ -14,13 +14,14 @@
     { id: "dashboard", label: "Dashboard",      icon: "ic-gauge" },
     { id: "inventory", label: "Stock",          icon: "ic-list" },
     { id: "cart",      label: "Cart",           icon: "ic-cart" },
+    { id: "orders",    label: "Confirmations",  icon: "ic-clipboard" },
     { id: "users",     label: "User Management", icon: "ic-users" }
   ];
   var ADMIN_ONLY = ["users"];
   var DEFAULTS = {
-    admin:         ["dashboard", "inventory", "cart", "users"],
-    stock_manager: ["dashboard", "inventory", "cart"],
-    salesperson:   ["dashboard", "inventory", "cart"],
+    admin:         ["dashboard", "inventory", "cart", "orders", "users"],
+    stock_manager: ["dashboard", "inventory", "cart", "orders"],
+    salesperson:   ["dashboard", "inventory", "cart", "orders"],
     customer:      ["inventory", "cart"]
   };
 

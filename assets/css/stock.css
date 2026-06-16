@@ -2582,3 +2582,70 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
 .um-search .ic { width: 18px; height: 18px; color: var(--ink-faint); }
 .um-search input { flex: 1; border: 0; outline: none; background: none; padding: 11px 0; font-size: 13.5px; color: var(--ink); font-family: inherit; }
 .um-search input::placeholder { color: var(--ink-faint); }
+
+/* ============================================================
+   Orders / Pending confirmation (staff)
+   ============================================================ */
+.orders-root { display: block; }
+.orders-page { max-width: 1320px; margin: 0 auto; padding: 26px clamp(16px, 4vw, 40px) 90px; }
+.orders-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.orders-title { font-family: var(--serif); font-size: clamp(28px, 4vw, 40px); font-weight: 600; color: var(--ink); }
+.orders-sub { margin-top: 6px; font-size: 14px; color: var(--ink-soft); max-width: 640px; }
+.orders-sub #ordersCount { color: var(--champagne-deep); font-weight: 600; }
+.orders-confirm-btn {
+  flex: none; height: 44px; padding: 0 20px; border-radius: 11px; border: 0;
+  background: var(--ink); color: #fff; font-size: 13.5px; font-weight: 600; font-family: inherit;
+  transition: opacity .2s, transform .15s;
+}
+.orders-confirm-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.orders-confirm-btn:disabled { opacity: .45; cursor: default; }
+
+.orders-search {
+  display: flex; align-items: center; gap: 9px; max-width: 460px;
+  padding: 0 14px; border: 1px solid var(--line); border-radius: 11px; background: var(--card); margin-bottom: 16px;
+}
+.orders-search:focus-within { border-color: var(--champagne); }
+.orders-search .ic { width: 18px; height: 18px; color: var(--ink-faint); }
+.orders-search input { flex: 1; border: 0; outline: none; background: none; padding: 11px 0; font-size: 13.5px; color: var(--ink); font-family: inherit; }
+
+.orders-pills { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.ord-pill {
+  padding: 8px 15px; border-radius: 999px; font-size: 13px; font-weight: 500; font-family: inherit;
+  background: var(--card); border: 1px solid var(--line); color: var(--ink-soft);
+}
+.ord-pill.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.ord-cnt { opacity: .6; margin-left: 3px; }
+
+.orders-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.orders-table { width: 100%; border-collapse: collapse; min-width: 920px; font-size: 13.5px; }
+.orders-table thead th {
+  text-align: left; padding: 14px 16px; font-size: 11px; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--ink-faint); font-weight: 600; border-bottom: 1px solid var(--line);
+}
+.orders-table tbody td { padding: 16px; border-bottom: 1px solid var(--line-soft); color: var(--ink); vertical-align: middle; }
+.orders-table tbody tr:last-child td { border-bottom: 0; }
+.orders-table tbody tr:hover { background: #faf9f5; }
+.ord-check { width: 36px; }
+.ord-check input { width: 16px; height: 16px; accent-color: var(--ink); cursor: pointer; }
+.ord-product div { font-weight: 600; color: var(--ink); max-width: 280px; }
+.ord-product span { display: block; font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.ord-product .ord-cust { color: var(--champagne-deep); }
+.ord-disc { color: var(--price); font-weight: 600; }
+.ord-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.ord-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.ord-status.pending_confirmation { color: var(--hold); }
+.ord-status.confirmed { color: var(--good); }
+.ord-status.issue_raised { color: #b4453f; }
+.ord-status.cancelled { color: var(--ink-faint); }
+.ord-actions { white-space: nowrap; text-align: right; }
+.ord-accept, .ord-issue {
+  height: 36px; padding: 0 16px; border-radius: 9px; font-size: 13px; font-weight: 600; font-family: inherit;
+  border: 1px solid transparent; margin-left: 8px;
+}
+.ord-accept { background: var(--ink); color: #fff; }
+.ord-accept:hover:not(:disabled) { filter: brightness(1.1); }
+.ord-issue { background: var(--card); color: var(--ink); border-color: var(--line); }
+.ord-issue:hover { background: var(--grey-bg); }
+.ord-handled { font-size: 12.5px; color: var(--ink-faint); font-style: italic; }
+.ord-empty, .ord-loading { text-align: center; padding: 48px 16px; color: var(--ink-faint); }
+.ord-empty .ic { width: 38px; height: 38px; opacity: .5; display: block; margin: 0 auto 12px; }

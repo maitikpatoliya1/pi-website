@@ -164,6 +164,51 @@
     root.querySelectorAll("[data-cart-action]").forEach(function (btn) { btn.disabled = items.length === 0; });
   }
 
+  function cartMsg(text, isErr) {
+    var el = $("cartMessage");
+    if (el) { el.textContent = text; el.classList.toggle("error", !!isErr); }
+  }
+  function capitalize(s) { return String(s).charAt(0).toUpperCase() + String(s).slice(1); }
+
+  // Issue a document (proforma/hold/memo/invoice): write one order row per
+  // stone to Supabase as "pending_confirmation" for the sales desk to action.
+  function issueDocument(docType, btn) {
+    var items = hydrated();
+    if (!items.length) return;
+    var sbc = global.PI_SB;
+    if (!sbc) { cartMsg("Not connected — please refresh.", true); return; }
+    if (btn) btn.disabled = true;
+    cartMsg("Issuing " + docType + "…", false);
+    sbc.auth.getUser().then(function (u) {
+      var user = u.data && u.data.user;
+      if (!user) throw new Error("Please sign in again.");
+      return sbc.from("profiles").select("username,first_name,last_name,company").eq("id", user.id).single()
+        .then(function (r) {
+          var p = r.data || {};
+          var name = [p.first_name, p.last_name].filter(Boolean).join(" ") || p.username || "";
+          var ref = docType.slice(0, 2).toUpperCase() + "-" + Date.now().toString(36).toUpperCase();
+          var orderRows = items.map(function (it) {
+            return {
+              doc_type: docType, order_ref: ref, stock_id: String(it.id),
+              description: titleLine(it), certificate: it.rpt || null, lab: it.lab || null,
+              amount: it.total != null ? +it.total : null, ppc: it.ppc != null ? +it.ppc : null,
+              discount: it.dis != null ? +it.dis : null, bank_rate: null,
+              customer_id: user.id, customer_name: name, customer_company: p.company || null,
+              status: "pending_confirmation"
+            };
+          });
+          return sbc.from("orders").insert(orderRows);
+        });
+    }).then(function (res) {
+      if (res && res.error) throw new Error(res.error.message);
+      clear();
+      cartMsg(capitalize(docType) + " issued for " + items.length + " stone" + (items.length === 1 ? "" : "s") + ". The sales desk will confirm shortly.", false);
+    }).catch(function (err) {
+      if (btn) btn.disabled = false;
+      cartMsg("Could not issue " + docType + ": " + (err.message || err), true);
+    });
+  }
+
   document.addEventListener("click", function (e) {
     var removeBtn = e.target.closest("[data-cart-remove]");
     if (removeBtn) {
@@ -176,8 +221,7 @@
     }
     var action = e.target.closest("[data-cart-action]");
     if (action) {
-      var msg = $("cartMessage");
-      if (msg) msg.textContent = action.textContent.trim() + " selected for " + count() + " stone" + (count() === 1 ? "." : "s.");
+      issueDocument(action.getAttribute("data-cart-action"), action);
     }
   });
 

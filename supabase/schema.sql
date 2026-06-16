@@ -197,3 +197,46 @@ create policy "kyc_read_own_or_admin" on storage.objects
 --   set role = 'admin', status = 'approved'
 --   where email = 'maitikpatoliya@gmail.com';
 -- ============================================================
+
+-- ============================================================
+-- orders (proformas customers issue from the cart; staff confirm)
+-- ============================================================
+create or replace function public.is_staff()
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce((select role in ('admin','salesperson','stock_manager')
+                   from public.profiles where id = auth.uid()), false);
+$$;
+
+create table if not exists public.orders (
+  id               uuid primary key default gen_random_uuid(),
+  doc_type         text not null default 'proforma'
+                     check (doc_type in ('proforma','hold','memo','invoice')),
+  order_ref        text,
+  stock_id         text,
+  description      text,
+  certificate      text,
+  lab              text,
+  amount           numeric,
+  ppc              numeric,
+  discount         numeric,
+  bank_rate        text,
+  customer_id      uuid references public.profiles(id) on delete set null,
+  customer_name    text,
+  customer_company text,
+  status           text not null default 'pending_confirmation'
+                     check (status in ('pending_confirmation','confirmed','issue_raised','cancelled')),
+  issue_note       text,
+  handled_by       uuid references public.profiles(id),
+  handled_at       timestamptz,
+  created_at       timestamptz not null default now()
+);
+create index if not exists orders_status_idx on public.orders (status);
+create index if not exists orders_customer_idx on public.orders (customer_id);
+
+alter table public.orders enable row level security;
+drop policy if exists orders_insert on public.orders;
+create policy orders_insert on public.orders for insert with check (customer_id = auth.uid());
+drop policy if exists orders_select on public.orders;
+create policy orders_select on public.orders for select using (customer_id = auth.uid() or public.is_staff());
+drop policy if exists orders_update on public.orders;
+create policy orders_update on public.orders for update using (public.is_staff()) with check (public.is_staff());
