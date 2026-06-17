@@ -51,11 +51,19 @@
       actions = '<button class="um-approve" data-act="approved" data-u="' + esc(a.username) + '"><svg class="ic"><use href="#ic-check"/></svg> Approve</button>';
     }
 
+    var me = PIAuth.currentProfile && PIAuth.currentProfile();
+    var canRemove = a.id && (!me || a.id !== me.id);
+    var removeBtn = canRemove
+      ? '<button type="button" class="um-remove" data-del="' + esc(a.id) +
+        '" data-name="' + esc(a.company || fullName(a) || a.username) +
+        '" title="Delete account" aria-label="Delete account"><svg class="ic"><use href="#ic-x"/></svg></button>'
+      : "";
+
     return '<article class="um-card"><div class="um-card-top">' +
       '<div><div class="um-company">' + esc(a.company || a.username) + '</div>' +
         '<div class="um-person">' + esc(fullName(a)) + " · " + esc(a.email) + "</div></div>" +
       '<div class="um-badges"><span class="um-badge role">' + esc(PIAuth.roleLabel(a.role)) + '</span>' +
-        '<span class="um-badge ' + a.status + '">' + a.status + "</span></div></div>" +
+        '<span class="um-badge ' + a.status + '">' + a.status + "</span>" + removeBtn + "</div></div>" +
       '<dl class="um-detail">' + details + "</dl>" +
       (docs ? '<div class="um-docs">' + docs + "</div>" : "") +
       '<div class="um-actions"><label class="um-rolepick">Role' +
@@ -122,6 +130,23 @@
       Array.prototype.forEach.call(el.querySelectorAll("[data-role-for]"), function (sel) {
         sel.addEventListener("change", function () {
           PIAuth.setRole(sel.getAttribute("data-role-for"), sel.value).then(updateApplications);
+        });
+      });
+      Array.prototype.forEach.call(el.querySelectorAll("[data-del]"), function (b) {
+        b.addEventListener("click", function () {
+          var id = b.getAttribute("data-del");
+          var name = b.getAttribute("data-name") || "this account";
+          if (!global.confirm('Permanently delete "' + name + '"?\n\nThis removes their login and all of their data. This cannot be undone.')) return;
+          b.disabled = true;
+          sb().functions.invoke("delete-user", { body: { id: id } }).then(function (r) {
+            if (r.data && r.data.ok) { updateApplications(); return; }
+            b.disabled = false;
+            var emsg = (r.data && r.data.error) || (r.error && r.error.message) || "Please try again.";
+            global.alert("Could not delete the account: " + emsg);
+          }).catch(function (e) {
+            b.disabled = false;
+            global.alert("Could not delete the account: " + (e && e.message ? e.message : e));
+          });
         });
       });
     }).catch(function (err) {

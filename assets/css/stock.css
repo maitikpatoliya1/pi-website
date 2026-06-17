@@ -2457,7 +2457,11 @@ tr.detail-row td { padding: 0; background: #faf9f4; border-bottom: 1px solid var
 .um-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
 .um-company { font-family: var(--serif); font-size: 21px; font-weight: 600; color: var(--ink); }
 .um-person { margin-top: 3px; font-size: 13.5px; color: var(--ink-soft); }
-.um-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+.um-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.um-remove { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; border-radius: 999px; border: 1px solid var(--line); background: var(--surface, #fff); color: var(--ink-faint); cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+.um-remove .ic { width: 14px; height: 14px; }
+.um-remove:hover { background: #fbecec; border-color: #e3b7b4; color: #b4453f; }
+.um-remove:disabled { opacity: .5; cursor: default; }
 .um-badge { padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
 .um-badge.role { background: var(--grey-bg); color: var(--champagne-deep); border: 1px solid var(--line); }
 .um-badge.pending { background: var(--hold-bg); color: var(--hold); }
