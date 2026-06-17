@@ -97,8 +97,8 @@
     }
 
     /* drawer open/close */
-    function open() { menu.classList.add("open"); backdrop.hidden = false; menu.setAttribute("aria-hidden", "false"); }
-    function close() { menu.classList.remove("open"); backdrop.hidden = true; menu.setAttribute("aria-hidden", "true"); }
+    function open() { menu.classList.add("open"); backdrop.hidden = false; menu.setAttribute("aria-hidden", "false"); document.body.classList.add("pi-menu-open"); }
+    function close() { menu.classList.remove("open"); backdrop.hidden = true; menu.setAttribute("aria-hidden", "true"); document.body.classList.remove("pi-menu-open"); }
     $("menuBtn").addEventListener("click", open);
     $("sideClose").addEventListener("click", close);
     backdrop.addEventListener("click", close);

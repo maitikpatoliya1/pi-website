@@ -30,7 +30,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://www.mydiamondinfo.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/stock.css?v=20260625" />
+  <link rel="stylesheet" href="assets/css/stock.css?v=20260626" />
   <link rel="icon" type="image/png" href="assets/img/logo.png" />
 </head>
 <body>
@@ -90,7 +90,16 @@
   <header class="topbar">
     <div class="topbar-left">
       <button class="menu-btn" id="menuBtn" aria-label="Open menu">
-        <svg class="ic"><use href="#ic-menu"/></svg><span>Menu</span>
+        <svg class="pi-compass" viewBox="0 0 100 100" aria-hidden="true">
+          <g class="pi-arrows">
+            <path d="M50 5 L61 31 L39 31 Z"/><path d="M50 95 L61 69 L39 69 Z"/>
+            <path d="M5 50 L31 39 L31 61 Z"/><path d="M95 50 L69 39 L69 61 Z"/>
+          </g>
+          <path class="pi-bracket" d="M37 33 C30 42 30 58 37 67"/>
+          <path class="pi-bracket" d="M63 33 C70 42 70 58 63 67"/>
+          <text class="pi-letters" x="50" y="60">PI</text>
+        </svg>
+        <span>Menu</span>
       </button>
       <a class="brand" href="index.html" aria-label="Pansuriya Impex home">
         <img src="assets/img/logo.png" alt="Pansuriya Impex" />
@@ -122,7 +131,21 @@
   <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
   <aside class="side-menu" id="sideMenu" aria-label="Main menu" aria-hidden="true">
     <div class="sm-head">
-      <span class="sm-title">Menu</span>
+      <div class="sm-brand">
+        <svg class="pi-compass" viewBox="0 0 100 100" aria-hidden="true">
+          <g class="pi-arrows">
+            <path d="M50 5 L61 31 L39 31 Z"/><path d="M50 95 L61 69 L39 69 Z"/>
+            <path d="M5 50 L31 39 L31 61 Z"/><path d="M95 50 L69 39 L69 61 Z"/>
+          </g>
+          <path class="pi-bracket" d="M37 33 C30 42 30 58 37 67"/>
+          <path class="pi-bracket" d="M63 33 C70 42 70 58 63 67"/>
+          <text class="pi-letters" x="50" y="60">PI</text>
+        </svg>
+        <span class="sm-wordmark">
+          <span class="sm-word-main">Pansuriya Impex</span>
+          <span class="sm-word-sub">The Customer Company</span>
+        </span>
+      </div>
       <button class="sm-close" id="sideClose" aria-label="Close menu"><svg class="ic"><use href="#ic-close"/></svg></button>
     </div>
     <div class="sm-user">
@@ -326,6 +349,6 @@
   <script src="assets/js/stock.js?v=20260624"></script>
   <script src="assets/js/usermgmt.js?v=20260625"></script>
   <script src="assets/js/orders.js?v=20260624"></script>
-  <script src="assets/js/shell.js?v=20260624"></script>
+  <script src="assets/js/shell.js?v=20260625"></script>
 </body>
 </html>
